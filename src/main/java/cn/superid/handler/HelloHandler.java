@@ -95,7 +95,6 @@ public class HelloHandler extends TextWebSocketHandler{
 
             // 4. Gather ICE candidates
             webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();
