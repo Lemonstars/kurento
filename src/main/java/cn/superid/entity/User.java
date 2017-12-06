@@ -1,4 +1,4 @@
-package cn.superid.user;
+package cn.superid.entity;
 
 import com.google.gson.JsonObject;
 import org.kurento.client.*;
@@ -11,17 +11,17 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class UserSession implements Closeable {
+public class User implements Closeable {
 
-    private final String userName;
-    private final String roomName;
-    private final WebSocketSession session;
-    private final MediaPipeline pipeline;
+    private String userName;
+    private String roomName;
+    private WebSocketSession session;
+    private MediaPipeline pipeline;
 
-    private final WebRtcEndpoint outgoingMedia;
-    private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
+    private WebRtcEndpoint outgoingMedia;
+    private ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-    public UserSession(String userName, String roomName, final WebSocketSession session, MediaPipeline pipeline) {
+    public User(String userName, String roomName, final WebSocketSession session, MediaPipeline pipeline) {
         this.userName = userName;
         this.roomName = roomName;
         this.session = session;
@@ -30,7 +30,6 @@ public class UserSession implements Closeable {
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
 
         this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
                 JsonObject response = new JsonObject();
@@ -53,25 +52,15 @@ public class UserSession implements Closeable {
     }
 
     public String getRoomName() {
-        return this.roomName;
+        return roomName;
     }
 
     public WebSocketSession getSession() {
         return session;
     }
 
-    public WebRtcEndpoint getOutgoingWebRtcPeer() {
+    public WebRtcEndpoint getOutgoingMedia() {
         return outgoingMedia;
-    }
-
-
-    @Override
-    public void close() throws IOException {
-        for (final String remoteParticipantName : incomingMedia.keySet()) {
-            final WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantName);
-            ep.release();
-        }
-        outgoingMedia.release();
     }
 
     public void sendMessage(JsonObject message) throws IOException {
@@ -81,15 +70,13 @@ public class UserSession implements Closeable {
     }
 
     public void cancelVideoFrom(final String senderName) {
-        final WebRtcEndpoint incoming = incomingMedia.remove(senderName);
+        WebRtcEndpoint incoming = incomingMedia.remove(senderName);
         incoming.release();
     }
 
-
-    public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException{
+    public void receiveVideoFrom(User sender, String sdpOffer) throws IOException{
         WebRtcEndpoint webRtcEndpoint = getEndpointForUser(sender);
         String ipSdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-
 
         JsonObject scParams = new JsonObject();
         scParams.addProperty("id", "receiveVideoAnswer");
@@ -100,19 +87,16 @@ public class UserSession implements Closeable {
         getEndpointForUser(sender).gatherCandidates();
     }
 
-
-    private WebRtcEndpoint getEndpointForUser(final UserSession sender) {
+    private WebRtcEndpoint getEndpointForUser(final User sender) {
         if (sender.getUserName().equals(userName)) {
             return outgoingMedia;
         }
-
 
         WebRtcEndpoint incoming = incomingMedia.get(sender.getUserName());
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
             incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();
@@ -124,6 +108,7 @@ public class UserSession implements Closeable {
                             session.sendMessage(new TextMessage(response.toString()));
                         }
                     } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             });
@@ -131,7 +116,7 @@ public class UserSession implements Closeable {
             incomingMedia.put(sender.getUserName(), incoming);
         }
 
-        sender.getOutgoingWebRtcPeer().connect(incoming);
+        sender.getOutgoingMedia().connect(incoming);
 
         return incoming;
     }
@@ -148,16 +133,25 @@ public class UserSession implements Closeable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public void close() throws IOException {
+        for (String remoteParticipantName : incomingMedia.keySet()) {
+            WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantName);
+            ep.release();
+        }
+        outgoingMedia.release();
+    }
 
+    @Override
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }
-        if (obj == null || !(obj instanceof UserSession)) {
+
+        if (obj == null || !(obj instanceof User)) {
             return false;
         }
 
-        UserSession other = (UserSession) obj;
+        User other = (User) obj;
         boolean eq = userName.equals(other.userName);
         eq &= roomName.equals(other.roomName);
         return eq;

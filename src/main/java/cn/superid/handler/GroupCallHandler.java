@@ -1,9 +1,10 @@
 package cn.superid.handler;
 
-import cn.superid.room.Room;
-import cn.superid.room.RoomManager;
-import cn.superid.user.UserRegistry;
-import cn.superid.user.UserSession;
+import cn.superid.manager.RoomManagerInterface;
+import cn.superid.entity.Room;
+import cn.superid.manager.UserManagerInterface;
+import cn.superid.manager.impl.UserManager;
+import cn.superid.entity.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -21,16 +22,16 @@ public class GroupCallHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     @Autowired
-    private RoomManager roomManager;
+    private RoomManagerInterface roomManager;
 
     @Autowired
-    private UserRegistry registry;
+    private UserManagerInterface registry;
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        final UserSession user = registry.getBySession(session);
+        final User user = registry.getBySession(session);
 
         switch (jsonMessage.get("id").getAsString()) {
             case "joinRoom":
@@ -38,7 +39,7 @@ public class GroupCallHandler extends TextWebSocketHandler {
                 break;
             case "receiveVideoFrom":
                 String senderName = jsonMessage.get("sender").getAsString();
-                UserSession sender = registry.getByName(senderName);
+                User sender = registry.getByName(senderName);
                 String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -61,7 +62,7 @@ public class GroupCallHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        UserSession user = registry.removeBySession(session);
+        User user = registry.removeBySession(session);
         roomManager.getRoom(user.getRoomName()).leave(user);
     }
 
@@ -70,14 +71,14 @@ public class GroupCallHandler extends TextWebSocketHandler {
         String name = params.get("name").getAsString();
 
         Room room = roomManager.getRoom(roomName);
-        UserSession user = room.join(name, session);
+        User user = room.join(name, session);
         registry.register(user);
     }
 
-    private void leaveRoom(UserSession user) throws IOException {
+    private void leaveRoom(User user) throws IOException {
         Room room = roomManager.getRoom(user.getRoomName());
         room.leave(user);
-        if (room.getParticipants().isEmpty()) {
+        if (!room.existParticipants()) {
             roomManager.removeRoom(room);
         }
     }

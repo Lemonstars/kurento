@@ -1,6 +1,5 @@
-package cn.superid.room;
+package cn.superid.entity;
 
-import cn.superid.user.UserSession;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,63 +10,77 @@ import org.springframework.web.socket.WebSocketSession;
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author 刘兴
+ * @date 2017.12.6
+ * @version 1.0
+ */
 public class Room implements Closeable {
 
     private String roomName;
     private MediaPipeline pipeline;
-    private ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
     public Room(String roomName, MediaPipeline pipeline) {
         this.roomName = roomName;
         this.pipeline = pipeline;
     }
 
-    @Override
-    public void close() {
-        for (UserSession user : participants.values()) {
-            try {
-                user.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        participants.clear();
-        pipeline.release( );
-    }
-
-    @PreDestroy
-    private void shutdown() {
-        this.close();
-    }
-
-    public String getRoomName() {
-        return roomName;
-    }
-
-    public UserSession join(String userName, WebSocketSession session) throws IOException {
-        UserSession participant = new UserSession(userName, this.roomName, session, this.pipeline);
+    /**
+     * 新成员加入房间：
+     * 1.通知已在房间内的成员：有新成员加入，获取用户名
+     * 2.通知刚加入的成员：所有其他已在房间内成员的用户名
+     *
+     * @param userName
+     * @param session
+     * @return 生成的用户对象
+     * @throws IOException
+     */
+    public User join(String userName, WebSocketSession session) throws IOException {
+        User participant = new User(userName, this.roomName, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUserName(), participant);
         sendParticipantNames(participant);
         return participant;
     }
 
-    public void leave(UserSession user) throws IOException {
+    /**
+     * 成员退出房间:
+     * 通知其他成员：有成员退出房间
+     *
+     * @param user
+     * @throws IOException
+     */
+    public void leave(User user) throws IOException {
         this.removeParticipant(user.getUserName());
         user.close();
     }
 
-    private void joinRoom(UserSession newParticipant) throws IOException {
+    /**
+     * 房间内是否还存在成员
+     * @return true 房间内有成员
+     */
+    public boolean existParticipants(){
+        return !participants.values().isEmpty();
+    }
+
+    /**
+     * 获取房间的名称
+     * @return
+     */
+    public String getRoomName() {
+        return roomName;
+    }
+
+    private void joinRoom(User newParticipant) throws IOException {
         JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");
         newParticipantMsg.addProperty("name", newParticipant.getUserName());
 
-        for (final UserSession participant : participants.values()) {
+        for (User participant : participants.values()) {
             try {
                 participant.sendMessage(newParticipantMsg);
             } catch (final IOException e) {
@@ -82,7 +95,7 @@ public class Room implements Closeable {
         JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
         participantLeftJson.addProperty("name", name);
-        for (final UserSession participant : participants.values()) {
+        for (final User participant : participants.values()) {
             try {
                 participant.cancelVideoFrom(name);
                 participant.sendMessage(participantLeftJson);
@@ -90,14 +103,11 @@ public class Room implements Closeable {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-    public void sendParticipantNames(UserSession user) throws IOException {
-
+    private void sendParticipantNames(User user) throws IOException {
         JsonArray participantsArray = new JsonArray();
-        for (UserSession participant : this.getParticipants()) {
+        for (User participant : participants.values()) {
             if (!participant.equals(user)) {
                 JsonElement participantName = new JsonPrimitive(participant.getUserName());
                 participantsArray.add(participantName);
@@ -110,8 +120,23 @@ public class Room implements Closeable {
         user.sendMessage(existingParticipantsMsg);
     }
 
-    public Collection<UserSession> getParticipants() {
-        return participants.values();
+    @Override
+    public void close() {
+        for (User user : participants.values()) {
+            try {
+                user.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        participants.clear();
+        pipeline.release( );
+    }
+
+    @PreDestroy
+    private void shutdown() {
+        this.close();
     }
 
 }
