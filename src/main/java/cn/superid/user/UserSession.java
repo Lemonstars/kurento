@@ -1,27 +1,19 @@
 package cn.superid.user;
 
+import com.google.gson.JsonObject;
+import org.kurento.client.*;
+import org.kurento.jsonrpc.JsonUtils;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.kurento.client.Continuation;
-import org.kurento.client.EventListener;
-import org.kurento.client.IceCandidate;
-import org.kurento.client.IceCandidateFoundEvent;
-import org.kurento.client.MediaPipeline;
-import org.kurento.client.WebRtcEndpoint;
-import org.kurento.jsonrpc.JsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-
-import com.google.gson.JsonObject;
-
 public class UserSession implements Closeable {
 
-    private final String name;
+    private final String userName;
     private final String roomName;
     private final WebSocketSession session;
     private final MediaPipeline pipeline;
@@ -29,11 +21,8 @@ public class UserSession implements Closeable {
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-
-    public UserSession(final String name, String roomName, final WebSocketSession session,
-                       MediaPipeline pipeline) {
-
-        this.name = name;
+    public UserSession(String userName, String roomName, final WebSocketSession session, MediaPipeline pipeline) {
+        this.userName = userName;
         this.roomName = roomName;
         this.session = session;
         this.pipeline = pipeline;
@@ -46,20 +35,21 @@ public class UserSession implements Closeable {
             public void onEvent(IceCandidateFoundEvent event) {
                 JsonObject response = new JsonObject();
                 response.addProperty("id", "iceCandidate");
-                response.addProperty("name", name);
+                response.addProperty("name", userName);
                 response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                 try {
                     synchronized (session) {
                         session.sendMessage(new TextMessage(response.toString()));
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
     public String getRoomName() {
@@ -69,7 +59,6 @@ public class UserSession implements Closeable {
     public WebSocketSession getSession() {
         return session;
     }
-
 
     public WebRtcEndpoint getOutgoingWebRtcPeer() {
         return outgoingMedia;
@@ -86,9 +75,9 @@ public class UserSession implements Closeable {
     }
 
     public void sendMessage(JsonObject message) throws IOException {
-//        synchronized (session) {
-        session.sendMessage(new TextMessage(message.toString()));
-//        }
+        synchronized (session) {
+            session.sendMessage(new TextMessage(message.toString()));
+        }
     }
 
     public void cancelVideoFrom(final String senderName) {
@@ -104,7 +93,7 @@ public class UserSession implements Closeable {
 
         JsonObject scParams = new JsonObject();
         scParams.addProperty("id", "receiveVideoAnswer");
-        scParams.addProperty("name", sender.getName());
+        scParams.addProperty("name", sender.getUserName());
         scParams.addProperty("sdpAnswer", ipSdpAnswer);
 
         sendMessage(scParams);
@@ -113,12 +102,12 @@ public class UserSession implements Closeable {
 
 
     private WebRtcEndpoint getEndpointForUser(final UserSession sender) {
-        if (sender.getName().equals(name)) {
+        if (sender.getUserName().equals(userName)) {
             return outgoingMedia;
         }
 
 
-        WebRtcEndpoint incoming = incomingMedia.get(sender.getName());
+        WebRtcEndpoint incoming = incomingMedia.get(sender.getUserName());
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
@@ -128,7 +117,7 @@ public class UserSession implements Closeable {
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();
                     response.addProperty("id", "iceCandidate");
-                    response.addProperty("name", sender.getName());
+                    response.addProperty("name", sender.getUserName());
                     response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                     try {
                         synchronized (session) {
@@ -139,7 +128,7 @@ public class UserSession implements Closeable {
                 }
             });
 
-            incomingMedia.put(sender.getName(), incoming);
+            incomingMedia.put(sender.getUserName(), incoming);
         }
 
         sender.getOutgoingWebRtcPeer().connect(incoming);
@@ -147,12 +136,8 @@ public class UserSession implements Closeable {
         return incoming;
     }
 
-
-
-
-
     public void addCandidate(IceCandidate candidate, String name) {
-        if (this.name.compareTo(name) == 0) {
+        if (this.userName.compareTo(name) == 0) {
             outgoingMedia.addIceCandidate(candidate);
         } else {
             WebRtcEndpoint webRtc = incomingMedia.get(name);
@@ -171,8 +156,9 @@ public class UserSession implements Closeable {
         if (obj == null || !(obj instanceof UserSession)) {
             return false;
         }
+
         UserSession other = (UserSession) obj;
-        boolean eq = name.equals(other.name);
+        boolean eq = userName.equals(other.userName);
         eq &= roomName.equals(other.roomName);
         return eq;
     }
@@ -180,7 +166,7 @@ public class UserSession implements Closeable {
     @Override
     public int hashCode() {
         int result = 1;
-        result = 31 * result + name.hashCode();
+        result = 31 * result + userName.hashCode();
         result = 31 * result + roomName.hashCode();
         return result;
     }

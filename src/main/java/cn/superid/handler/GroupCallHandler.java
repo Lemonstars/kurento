@@ -1,27 +1,22 @@
 package cn.superid.handler;
 
-import java.io.IOException;
-
 import cn.superid.room.Room;
 import cn.superid.room.RoomManager;
 import cn.superid.user.UserRegistry;
 import cn.superid.user.UserSession;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.kurento.client.IceCandidate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import java.io.IOException;
 
 public class GroupCallHandler extends TextWebSocketHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GroupCallHandler.class);
 
     private static final Gson gson = new GsonBuilder().create();
 
@@ -37,20 +32,14 @@ public class GroupCallHandler extends TextWebSocketHandler {
 
         final UserSession user = registry.getBySession(session);
 
-        if (user != null) {
-            log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
-        } else {
-            log.debug("Incoming message from new user: {}", jsonMessage);
-        }
-
         switch (jsonMessage.get("id").getAsString()) {
             case "joinRoom":
                 joinRoom(jsonMessage, session);
                 break;
             case "receiveVideoFrom":
-                final String senderName = jsonMessage.get("sender").getAsString();
-                final UserSession sender = registry.getByName(senderName);
-                final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
+                String senderName = jsonMessage.get("sender").getAsString();
+                UserSession sender = registry.getByName(senderName);
+                String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
             case "leaveRoom":
@@ -77,17 +66,16 @@ public class GroupCallHandler extends TextWebSocketHandler {
     }
 
     private void joinRoom(JsonObject params, WebSocketSession session) throws IOException {
-        final String roomName = params.get("room").getAsString();
-        final String name = params.get("name").getAsString();
-        log.info("PARTICIPANT {}: trying to join room {}", name, roomName);
+        String roomName = params.get("room").getAsString();
+        String name = params.get("name").getAsString();
 
         Room room = roomManager.getRoom(roomName);
-        final UserSession user = room.join(name, session);
+        UserSession user = room.join(name, session);
         registry.register(user);
     }
 
     private void leaveRoom(UserSession user) throws IOException {
-        final Room room = roomManager.getRoom(user.getRoomName());
+        Room room = roomManager.getRoom(user.getRoomName());
         room.leave(user);
         if (room.getParticipants().isEmpty()) {
             roomManager.removeRoom(room);

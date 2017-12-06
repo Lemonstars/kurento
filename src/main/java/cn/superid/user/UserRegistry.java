@@ -2,7 +2,6 @@ package cn.superid.user;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import cn.superid.user.UserSession;
 import org.springframework.web.socket.WebSocketSession;
 
 public class UserRegistry {
@@ -11,7 +10,7 @@ public class UserRegistry {
     private final ConcurrentHashMap<String, UserSession> usersBySessionId = new ConcurrentHashMap<>();
 
     public void register(UserSession user) {
-        usersByName.put(user.getName(), user);
+        usersByName.put(user.getUserName(), user);
         usersBySessionId.put(user.getSession().getId(), user);
     }
 
@@ -23,13 +22,9 @@ public class UserRegistry {
         return usersBySessionId.get(session.getId());
     }
 
-    public boolean exists(String name) {
-        return usersByName.keySet().contains(name);
-    }
-
     public UserSession removeBySession(WebSocketSession session) {
-        final UserSession user = getBySession(session);
-        usersByName.remove(user.getName());
+        UserSession user = getBySession(session);
+        usersByName.remove(user.getUserName());
         usersBySessionId.remove(session.getId());
         return user;
     }
