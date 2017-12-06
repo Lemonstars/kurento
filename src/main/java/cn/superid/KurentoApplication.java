@@ -1,6 +1,8 @@
 package cn.superid;
 
-import cn.superid.handler.HelloHandler;
+import cn.superid.handler.GroupCallHandler;
+import cn.superid.room.RoomManager;
+import cn.superid.user.UserRegistry;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,24 +13,34 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @SpringBootApplication
 @EnableWebSocket
-public class KurentoApplication implements WebSocketConfigurer{
-
-	@Bean
-	public KurentoClient kurentoClient() {
-		return KurentoClient.create("ws://192.168.1.184:8888/kurento");
-	}
+public class KurentoApplication implements WebSocketConfigurer {
 
     @Bean
-    public HelloHandler helloHandler() {
-        return new HelloHandler();
+    public UserRegistry registry() {
+        return new UserRegistry();
     }
 
-    public static void main(String[] args) {
-		SpringApplication.run(KurentoApplication.class, args);
-	}
+    @Bean
+    public RoomManager roomManager() {
+        return new RoomManager();
+    }
+
+    @Bean
+    public GroupCallHandler groupCallHandler() {
+        return new GroupCallHandler();
+    }
+
+    @Bean
+    public KurentoClient kurentoClient() {
+        return KurentoClient.create("ws://192.168.1.184:8888/kurento");
+    }
+
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(KurentoApplication.class, args);
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(helloHandler(), "/hello");
+        registry.addHandler(groupCallHandler(), "/groupCall");
     }
 }
