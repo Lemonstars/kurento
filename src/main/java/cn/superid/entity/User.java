@@ -11,6 +11,13 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 视频会议用户
+ *
+ * @author 刘兴
+ * @date 2017-12-6
+ * @version 1.0
+ */
 public class User implements Closeable {
 
     private String userName;

@@ -1,10 +1,9 @@
 package cn.superid.handler;
 
-import cn.superid.manager.RoomManagerInterface;
 import cn.superid.entity.Room;
-import cn.superid.manager.UserManagerInterface;
-import cn.superid.manager.impl.UserManager;
 import cn.superid.entity.User;
+import cn.superid.manager.RoomManagerInterface;
+import cn.superid.manager.UserManagerInterface;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -29,9 +28,9 @@ public class GroupCallHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
+        JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        final User user = registry.getBySession(session);
+        User user = registry.getBySession(session);
 
         switch (jsonMessage.get("id").getAsString()) {
             case "joinRoom":

@@ -68,7 +68,7 @@ function onExistingParticipants(msg) {
         localVideo: video,
         mediaConstrains: constraints,
         onicecandidate: participant.onIceCandidate.bind(participant)
-    }
+    };
 
     participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
         function (error) {

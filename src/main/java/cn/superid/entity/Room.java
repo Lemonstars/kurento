@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
+ * 视频房间
+ *
  * @author 刘兴
  * @date 2017.12.6
  * @version 1.0
@@ -95,6 +97,7 @@ public class Room implements Closeable {
         JsonObject participantLeftJson = new JsonObject();
         participantLeftJson.addProperty("id", "participantLeft");
         participantLeftJson.addProperty("name", name);
+
         for (final User participant : participants.values()) {
             try {
                 participant.cancelVideoFrom(name);
