@@ -34,12 +34,12 @@ public class GroupCallHandler extends TextWebSocketHandler {
         User user = userManager.getBySession(session);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "createRoom":
+            case "joinNewRoom":
                 createRoom(jsonMessage, session);
                 break;
             case "receiveVideoFrom":
                 String senderName = jsonMessage.get("sender").getAsString();
-                User sender = userManager.getByName(senderName);
+                User sender = userManager.getByUserId(senderName);
                 String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -76,16 +76,16 @@ public class GroupCallHandler extends TextWebSocketHandler {
 //    }
 
     private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
-        String name = params.get("name").getAsString();
+        String userId = params.get("userId").getAsString();
         String roomId = UUIDGenerator.generatorUUID();
 
-        boolean isFree = userManager.isUserFree(name);
+        boolean isFree = userManager.isUserFree(userId);
         if(isFree){
             Room room = roomManager.getRoom(roomId);
-            User user = room.join(name, session);
+            User user = room.joinNewRoom(userId, session);
             userManager.register(user);
         }else {
-            User user = userManager.getByName(name);
+            User user = userManager.getByUserId(userId);
             user.notifyVideoExist();
         }
     }

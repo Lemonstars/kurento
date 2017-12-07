@@ -24,18 +24,11 @@ public interface UserManagerInterface {
     User removeBySession(WebSocketSession session);
 
     /**
-     * 通过用户名清除用户数据
-     * @param userName
+     * 通过姓名标识获取用户
+     * @param userId
      * @return
      */
-    User removeByUserName(String userName);
-
-    /**
-     * 通过姓名获取用户
-     * @param name
-     * @return
-     */
-    User getByName(String name);
+    User getByUserId(String userId);
 
     /**
      * 通过session获取用户

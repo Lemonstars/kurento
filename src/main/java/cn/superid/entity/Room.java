@@ -32,19 +32,41 @@ public class Room implements Closeable {
     }
 
     /**
+     * 创建房间创建者加入房间：
+     * 1.自己加入房间
+     * 2.将房间标识传递给client
+     *
+     * @param userId
+     * @param session
+     * @return
+     * @throws IOException
+     */
+    public User joinNewRoom(String userId, WebSocketSession session) throws IOException{
+        User roomCreator = new User(userId, this.roomId, session, this.pipeline);
+        notifyClientRoomId(roomCreator);
+        //TODO 当前信息传递和前端显示情况下，需要调用这个方法
+        joinRoom(roomCreator);
+        participants.put(userId, roomCreator);
+        //TODO 当前信息传递和前端显示情况下，需要调用这个方法
+        sendParticipantNames(roomCreator);
+
+        return roomCreator;
+    }
+
+    /**
      * 新成员加入房间：
      * 1.通知已在房间内的成员：有新成员加入，获取用户名
      * 2.通知刚加入的成员：所有其他已在房间内成员的用户名
      *
-     * @param userName
+     * @param userId
      * @param session
      * @return 生成的用户对象
      * @throws IOException
      */
-    public User join(String userName, WebSocketSession session) throws IOException {
-        User participant = new User(userName, this.roomId, session, this.pipeline);
+    public User joinExistingRoom(String userId, WebSocketSession session) throws IOException {
+        User participant = new User(userId, this.roomId, session, this.pipeline);
         joinRoom(participant);
-        participants.put(participant.getUserId(), participant);
+        participants.put(userId, participant);
         sendParticipantNames(participant);
         return participant;
     }
@@ -121,6 +143,15 @@ public class Room implements Closeable {
         existingParticipantsMsg.addProperty("id", "existingParticipants");
         existingParticipantsMsg.add("data", participantsArray);
         user.sendMessage(existingParticipantsMsg);
+    }
+
+    private void notifyClientRoomId(User user) throws IOException{
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "captureRoomId");
+        jsonObject.addProperty("name", user.getRoomId());
+
+        user.sendMessage(jsonObject);
     }
 
     @Override

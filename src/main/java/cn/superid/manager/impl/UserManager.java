@@ -27,24 +27,16 @@ public class UserManager implements UserManagerInterface{
     @Override
     public User removeBySession(WebSocketSession session) {
         User user = getBySession(session);
-        usersByUserId.remove(user.getUserId());
-        usersBySessionId.remove(session.getId());
-        return user;
-    }
-
-    @Override
-    public User removeByUserName(String userName) {
-        User user = getByName(userName);
-        if(user != null){
+        if(user!=null){
             usersByUserId.remove(user.getUserId());
-            usersBySessionId.remove(user.getSession().getId());
+            usersBySessionId.remove(session.getId());
         }
         return user;
     }
 
     @Override
-    public User getByName(String name) {
-        return usersByUserId.get(name);
+    public User getByUserId(String userId) {
+        return usersByUserId.get(userId);
     }
 
     @Override

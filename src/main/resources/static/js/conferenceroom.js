@@ -24,8 +24,12 @@ ws.onmessage = function (message) {
                 }
             });
             break;
+
         case 'videoExist':
-            console.log("The user are chatting on the other video");
+            console.log("You are chatting on the other video");
+            break;
+        case 'captureRoomId':
+            console.log("roomId: " + parseMessage.name);
             break;
     }
 };
@@ -33,15 +37,13 @@ ws.onmessage = function (message) {
 function register() {
     name = document.getElementById('name').value;
 
-    // var room = document.getElementById('roomName').value;
-
     document.getElementById('room-header').innerText = 'ROOM ' + room;
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
     var message = {
-        id: 'createRoom',
-        name: name
+        id: 'joinNewRoom',
+        userId: name
     };
 
     sendMessage(message)
