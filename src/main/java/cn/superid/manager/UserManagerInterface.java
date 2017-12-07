@@ -24,6 +24,13 @@ public interface UserManagerInterface {
     User removeBySession(WebSocketSession session);
 
     /**
+     * 通过用户名清除用户数据
+     * @param userName
+     * @return
+     */
+    User removeByUserName(String userName);
+
+    /**
      * 通过姓名获取用户
      * @param name
      * @return
@@ -36,4 +43,11 @@ public interface UserManagerInterface {
      * @return
      */
     User getBySession(WebSocketSession session);
+
+    /**
+     * 通过用户名判断用户是否空闲
+     * @param userName
+     * @return false 如果在通话中
+     */
+    boolean isUserFree(String userName);
 }

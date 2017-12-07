@@ -15,26 +15,36 @@ import org.springframework.web.socket.WebSocketSession;
  */
 public class UserManager implements UserManagerInterface{
 
-    private final ConcurrentHashMap<String, User> usersByName = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, User> usersByUserId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, User> usersBySessionId = new ConcurrentHashMap<>();
 
     @Override
     public void register(User user) {
-        usersByName.put(user.getUserName(), user);
+        usersByUserId.put(user.getUserId(), user);
         usersBySessionId.put(user.getSession().getId(), user);
     }
 
     @Override
     public User removeBySession(WebSocketSession session) {
         User user = getBySession(session);
-        usersByName.remove(user.getUserName());
+        usersByUserId.remove(user.getUserId());
         usersBySessionId.remove(session.getId());
         return user;
     }
 
     @Override
+    public User removeByUserName(String userName) {
+        User user = getByName(userName);
+        if(user != null){
+            usersByUserId.remove(user.getUserId());
+            usersBySessionId.remove(user.getSession().getId());
+        }
+        return user;
+    }
+
+    @Override
     public User getByName(String name) {
-        return usersByName.get(name);
+        return usersByUserId.get(name);
     }
 
     @Override
@@ -42,4 +52,8 @@ public class UserManager implements UserManagerInterface{
         return usersBySessionId.get(session.getId());
     }
 
+    @Override
+    public boolean isUserFree(String userName) {
+        return !usersByUserId.containsKey(userName);
+    }
 }

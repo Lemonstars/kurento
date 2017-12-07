@@ -23,19 +23,19 @@ public class RoomManager implements RoomManagerInterface{
     private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
     @Override
-    public Room getRoom(String roomName) {
-        Room room = rooms.get(roomName);
+    public Room getRoom(String roomId) {
+        Room room = rooms.get(roomId);
 
-        if (room == null) {
-            room = new Room(roomName, kurento.createMediaPipeline());
-            rooms.put(roomName, room);
+        if (!rooms.containsKey(roomId)) {
+            room = new Room(roomId, kurento.createMediaPipeline());
+            rooms.put(roomId, room);
         }
         return room;
     }
 
     @Override
     public void removeRoom(Room room) {
-        rooms.remove(room.getRoomName());
+        rooms.remove(room.getRoomId());
         room.close();
     }
 

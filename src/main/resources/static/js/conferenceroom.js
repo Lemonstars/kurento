@@ -24,21 +24,24 @@ ws.onmessage = function (message) {
                 }
             });
             break;
+        case 'videoExist':
+            console.log("The user are chatting on the other video");
+            break;
     }
 };
 
 function register() {
     name = document.getElementById('name').value;
-    var room = document.getElementById('roomName').value;
+
+    // var room = document.getElementById('roomName').value;
 
     document.getElementById('room-header').innerText = 'ROOM ' + room;
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
     var message = {
-        id: 'joinRoom',
-        name: name,
-        room: room
+        id: 'createRoom',
+        name: name
     };
 
     sendMessage(message)

@@ -22,12 +22,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class Room implements Closeable {
 
-    private String roomName;
+    private String roomId;
     private MediaPipeline pipeline;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
-    public Room(String roomName, MediaPipeline pipeline) {
-        this.roomName = roomName;
+    public Room(String roomId, MediaPipeline pipeline) {
+        this.roomId = roomId;
         this.pipeline = pipeline;
     }
 
@@ -42,9 +42,9 @@ public class Room implements Closeable {
      * @throws IOException
      */
     public User join(String userName, WebSocketSession session) throws IOException {
-        User participant = new User(userName, this.roomName, session, this.pipeline);
+        User participant = new User(userName, this.roomId, session, this.pipeline);
         joinRoom(participant);
-        participants.put(participant.getUserName(), participant);
+        participants.put(participant.getUserId(), participant);
         sendParticipantNames(participant);
         return participant;
     }
@@ -57,7 +57,7 @@ public class Room implements Closeable {
      * @throws IOException
      */
     public void leave(User user) throws IOException {
-        this.removeParticipant(user.getUserName());
+        this.removeParticipant(user.getUserId());
         user.close();
     }
 
@@ -70,17 +70,17 @@ public class Room implements Closeable {
     }
 
     /**
-     * 获取房间的名称
+     * 获取房间的标志
      * @return
      */
-    public String getRoomName() {
-        return roomName;
+    public String getRoomId() {
+        return roomId;
     }
 
     private void joinRoom(User newParticipant) throws IOException {
         JsonObject newParticipantMsg = new JsonObject();
         newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("name", newParticipant.getUserName());
+        newParticipantMsg.addProperty("name", newParticipant.getUserId());
 
         for (User participant : participants.values()) {
             try {
@@ -112,7 +112,7 @@ public class Room implements Closeable {
         JsonArray participantsArray = new JsonArray();
         for (User participant : participants.values()) {
             if (!participant.equals(user)) {
-                JsonElement participantName = new JsonPrimitive(participant.getUserName());
+                JsonElement participantName = new JsonPrimitive(participant.getUserId());
                 participantsArray.add(participantName);
             }
         }

@@ -10,12 +10,12 @@ import cn.superid.entity.Room;
 public interface RoomManagerInterface {
 
     /**
-     * 通过房间名获取房间
+     * 通过房间标识获取房间
      * 如果该房间名对应的房间不存在，则创建一个新房间
-     * @param roomName
+     * @param roomId
      * @return
      */
-    Room getRoom(String roomName);
+    Room getRoom(String roomId);
 
     /**
      * 关闭房间
