@@ -34,8 +34,8 @@ public class GroupCallHandler extends TextWebSocketHandler {
         User user = userManager.getBySession(session);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "joinNewRoom":
-                createRoom(jsonMessage, session);
+            case "createNewRoom":
+                createNewRoom(jsonMessage, session);
                 break;
             case "receiveVideoFrom":
                 String senderName = jsonMessage.get("sender").getAsString();
@@ -65,22 +65,13 @@ public class GroupCallHandler extends TextWebSocketHandler {
         User user = userManager.removeBySession(session);
         roomManager.getRoom(user.getRoomId()).leave(user);
     }
-//
-//    private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
-//        String name = params.get("name").getAsString();
-//        String roomId = UUIDGenerator.generatorUUID();
-//
-//        Room room = roomManager.getRoom(roomId);
-//        User user = room.join(name, session);
-//        userManager.register(user);
-//    }
 
-    private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
+    private void createNewRoom(JsonObject params, WebSocketSession session) throws IOException {
         String userId = params.get("userId").getAsString();
-        String roomId = UUIDGenerator.generatorUUID();
 
         boolean isFree = userManager.isUserFree(userId);
         if(isFree){
+            String roomId = UUIDGenerator.generatorUUID();
             Room room = roomManager.getRoom(roomId);
             User user = room.joinNewRoom(userId, session);
             userManager.register(user);

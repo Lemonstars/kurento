@@ -42,7 +42,7 @@ function register() {
     document.getElementById('room').style.display = 'block';
 
     var message = {
-        id: 'joinNewRoom',
+        id: 'createNewRoom',
         userId: name
     };
 
