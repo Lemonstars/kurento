@@ -24,7 +24,7 @@ ws.onmessage = function (message) {
             receiveVideoResponse(parseMessage);
             break;
         case 'existingParticipants':
-            onExistingParticipants(parseMessage.data);
+            onExistingParticipants(parseMessage);
             break;
         case 'captureRoomId':
             console.log('roomId:'+ parseMessage.roomId);
