@@ -47,7 +47,6 @@ public class Room implements Closeable {
         //TODO 当前信息传递和前端显示情况下，需要调用这个方法
         joinRoom(roomCreator);
         participants.put(userId, roomCreator);
-        //TODO 当前信息传递和前端显示情况下，需要调用这个方法
         sendParticipantNames(roomCreator);
 
         return roomCreator;
@@ -146,10 +145,9 @@ public class Room implements Closeable {
     }
 
     private void notifyClientRoomId(User user) throws IOException{
-
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "captureRoomId");
-        jsonObject.addProperty("name", user.getRoomId());
+        jsonObject.addProperty("roomId", user.getRoomId());
 
         user.sendMessage(jsonObject);
     }

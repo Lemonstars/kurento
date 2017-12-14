@@ -38,8 +38,8 @@ public class GroupCallHandler extends TextWebSocketHandler {
                 createNewRoom(jsonMessage, session);
                 break;
             case "receiveVideoFrom":
-                String senderName = jsonMessage.get("sender").getAsString();
-                User sender = userManager.getByUserId(senderName);
+                String senderId = jsonMessage.get("sender").getAsString();
+                User sender = userManager.getByUserId(senderId);
                 String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;

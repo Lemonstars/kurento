@@ -49,7 +49,7 @@ function Participant(name) {
 
     this.onIceCandidate = function (candidate, wp) {
         var  message = {
-            id: 'onIceCnadidate',
+            id: 'onIceCandidate',
             candidate: candidate,
             name: name
         };
@@ -58,12 +58,13 @@ function Participant(name) {
 
     this.offerToReceiveVideo = function(error, offerSdp, wp){
         if (error) return console.error ("sdp offer error");
-        var msg =  { id : "receiveVideoFrom",
+        var msg =  {
+            id : "receiveVideoFrom",
             sender : name,
             sdpOffer : offerSdp
         };
         sendMessage(msg);
-    }
+    };
 
     Object.defineProperty(this, 'rtcPeer', { writable: true});
 }
