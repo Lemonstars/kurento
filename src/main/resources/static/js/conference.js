@@ -19,32 +19,28 @@ ws.onmessage = function (message) {
             });
             break;
         case 'newParticipantArrived':
-            onNewParticipant(parseMessage.name);
+            onNewParticipant(parseMessage);
+            break;
         case 'receiveVideoAnswer':
             receiveVideoResponse(parseMessage);
             break;
         case 'existingParticipants':
             onExistingParticipants(parseMessage);
             break;
+        case 'participantLeft':
+            onParticipantLeft(parseMessage);
+            break;
         case 'captureRoomId':
             console.log('roomId:'+ parseMessage.roomId);
-            break
+            break;
+        case 'videoExist':
+            console.log(parseMessage.userId + 'is on anther video');
+            break;
     }
 };
 
-function createNewRoom() {
-    userId = document.getElementById('userId').value;
-
-    var message = {
-        id: "createNewRoom",
-        userId: userId
-    };
-
-    sendMessage(message);
-}
-
 function onNewParticipant(sender) {
-    receiveVideo(sender.name);
+    receiveVideo(sender.userId);
 }
 
 function receiveVideoResponse(result) {
@@ -106,7 +102,40 @@ function onExistingParticipants(msg) {
     msg.data.forEach(receiveVideo);
 }
 
+function onParticipantLeft(request) {
+    var participant = participants[request.name];
+    participant.dispose();
+    delete participants[request.name];
+}
+
 function sendMessage(message) {
     var jsonMessage = JSON.stringify(message);
     ws.send(jsonMessage);
+}
+
+
+//创建房间
+function createNewRoom() {
+    userId = document.getElementById('userId').value;
+
+    var message = {
+        id: "createRoom",
+        userId: userId
+    };
+
+    sendMessage(message);
+}
+
+//加入已创建的房间
+function joinRoom() {
+    var viewerId = document.getElementById('userId-join').value;
+    var roomId = document.getElementById('roomId-join').value;
+
+    var message = {
+        id: "joinRoom",
+        userId: viewerId,
+        roomId: roomId
+    };
+
+    sendMessage(message)
 }

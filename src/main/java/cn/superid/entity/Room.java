@@ -44,10 +44,9 @@ public class Room implements Closeable {
     public User joinNewRoom(String userId, WebSocketSession session) throws IOException{
         User roomCreator = new User(userId, this.roomId, session, this.pipeline);
         notifyClientRoomId(roomCreator);
-        //TODO 当前信息传递和前端显示情况下，需要调用这个方法
-        joinRoom(roomCreator);
+        notifyNewParticipantArrived(roomCreator.getUserId());
         participants.put(userId, roomCreator);
-        sendParticipantNames(roomCreator);
+        notifyExistingParticipants(roomCreator);
 
         return roomCreator;
     }
@@ -64,9 +63,10 @@ public class Room implements Closeable {
      */
     public User joinExistingRoom(String userId, WebSocketSession session) throws IOException {
         User participant = new User(userId, this.roomId, session, this.pipeline);
-        joinRoom(participant);
+        notifyNewParticipantArrived(participant.getUserId());
         participants.put(userId, participant);
-        sendParticipantNames(participant);
+        notifyExistingParticipants(participant);
+
         return participant;
     }
 
@@ -78,7 +78,7 @@ public class Room implements Closeable {
      * @throws IOException
      */
     public void leave(User user) throws IOException {
-        this.removeParticipant(user.getUserId());
+        notifyParticipantLeft(user.getUserId());
         user.close();
     }
 
@@ -98,59 +98,6 @@ public class Room implements Closeable {
         return roomId;
     }
 
-    private void joinRoom(User newParticipant) throws IOException {
-        JsonObject newParticipantMsg = new JsonObject();
-        newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("name", newParticipant.getUserId());
-
-        for (User participant : participants.values()) {
-            try {
-                participant.sendMessage(newParticipantMsg);
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void removeParticipant(String name) throws IOException {
-        participants.remove(name);
-
-        JsonObject participantLeftJson = new JsonObject();
-        participantLeftJson.addProperty("id", "participantLeft");
-        participantLeftJson.addProperty("name", name);
-
-        for (final User participant : participants.values()) {
-            try {
-                participant.cancelVideoFrom(name);
-                participant.sendMessage(participantLeftJson);
-            } catch (final IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void sendParticipantNames(User user) throws IOException {
-        JsonArray participantsArray = new JsonArray();
-        for (User participant : participants.values()) {
-            if (!participant.equals(user)) {
-                JsonElement participantName = new JsonPrimitive(participant.getUserId());
-                participantsArray.add(participantName);
-            }
-        }
-
-        JsonObject existingParticipantsMsg = new JsonObject();
-        existingParticipantsMsg.addProperty("id", "existingParticipants");
-        existingParticipantsMsg.add("data", participantsArray);
-        user.sendMessage(existingParticipantsMsg);
-    }
-
-    private void notifyClientRoomId(User user) throws IOException{
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("id", "captureRoomId");
-        jsonObject.addProperty("roomId", user.getRoomId());
-
-        user.sendMessage(jsonObject);
-    }
 
     @Override
     public void close() {
@@ -169,6 +116,81 @@ public class Room implements Closeable {
     @PreDestroy
     private void shutdown() {
         this.close();
+    }
+
+
+    /**
+     * 通知已经在房间里的人：有新成员加入
+     * @param userId
+     * @throws IOException
+     */
+    private void notifyNewParticipantArrived(String userId) throws IOException {
+        JsonObject newParticipantMsg = new JsonObject();
+        newParticipantMsg.addProperty("id", "newParticipantArrived");
+        newParticipantMsg.addProperty("userId", userId);
+
+        for (User participant : participants.values()) {
+            try {
+                participant.sendMessage(newParticipantMsg);
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 通知房间里的其他人：有成员退出
+     * @param userId
+     * @throws IOException
+     */
+    private void notifyParticipantLeft(String userId) throws IOException {
+        participants.remove(userId);
+
+        JsonObject participantLeftJson = new JsonObject();
+        participantLeftJson.addProperty("id", "participantLeft");
+        participantLeftJson.addProperty("name", userId);
+
+        for (final User participant : participants.values()) {
+            try {
+                participant.cancelVideoFrom(userId);
+                participant.sendMessage(participantLeftJson);
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 通知user所有已在房间内的人
+     * @param user
+     * @throws IOException
+     */
+    private void notifyExistingParticipants(User user) throws IOException {
+        JsonArray participantsArray = new JsonArray();
+        for (User participant : participants.values()) {
+            if (!participant.equals(user)) {
+                JsonElement participantName = new JsonPrimitive(participant.getUserId());
+                participantsArray.add(participantName);
+            }
+        }
+
+        JsonObject existingParticipantsMsg = new JsonObject();
+        existingParticipantsMsg.addProperty("id", "existingParticipants");
+        existingParticipantsMsg.add("data", participantsArray);
+        user.sendMessage(existingParticipantsMsg);
+    }
+
+    /**
+     * 通知房间标识
+     * @param user
+     * @throws IOException
+     */
+    private void notifyClientRoomId(User user) throws IOException{
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "captureRoomId");
+        jsonObject.addProperty("roomId", user.getRoomId());
+
+        user.sendMessage(jsonObject);
     }
 
 }

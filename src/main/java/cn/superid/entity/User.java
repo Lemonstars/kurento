@@ -79,9 +79,10 @@ public class User implements Closeable {
     /**
      * 通知client用户已在其他的视频聊天中
      */
-    public void notifyVideoExist() throws IOException{
+    public void notifyVideoExist(String userId) throws IOException{
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "videoExist");
+        jsonObject.addProperty("userId", userId);
         sendMessage(jsonObject);
     }
 
@@ -90,7 +91,7 @@ public class User implements Closeable {
         incoming.release();
     }
 
-    public void receiveVideoFrom(User sender, String sdpOffer) throws IOException{
+    public void  receiveVideoFrom(User sender, String sdpOffer) throws IOException{
         WebRtcEndpoint webRtcEndpoint = getEndpointForUser(sender);
         String ipSdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 

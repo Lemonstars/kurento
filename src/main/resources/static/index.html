@@ -37,13 +37,16 @@
     <div>
         <h1>Create a Room</h1>
         <form onsubmit="createNewRoom(); return false;" accept-charset="UTF-8">
-            <p>
-                <input type="text" name="userId" value="" id="userId" placeholder="UserId" required>
-            </p>
-            <p class="submit">
-                <input type="submit" name="commit" value="create">
-            </p>
+            <input type="text" name="userId" value="" id="userId" placeholder="UserId" required>
+            <input type="submit" name="commit" value="create">
         </form>
+
+        <form onsubmit="joinRoom(); return false;" accept-charset="UTF-8">
+            <input type="text" name="userId" value="" id="userId-join" placeholder="UserId" required>
+            <input type="text" name="userId" value="" id="roomId-join" placeholder="RoomId" required>
+            <input type="submit" name="commit" value="join room">
+        </form>
+
         <div id="participants"></div>
     </div>
 

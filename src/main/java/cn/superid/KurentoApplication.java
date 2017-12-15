@@ -14,7 +14,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 /**
- * SpringBoot启动类，同时配置webSocket
+ * SpringBoot启动类，同时配置
  *
  * @author 刘兴
  * @date 2017-12-6
