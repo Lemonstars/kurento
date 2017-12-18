@@ -1,4 +1,4 @@
-var ws = new WebSocket('wss://' + location.host + '/groupcall');
+var ws = new WebSocket('wss://' + location.host + '/groupCall');
 var participants = {};
 var userId;
 
@@ -11,30 +11,34 @@ ws.onmessage = function(message) {
 	console.info('Received message: ' + message.data);
 
 	switch (parsedMessage.id) {
-	case 'existingParticipants':
-		onExistingParticipants(parsedMessage);
-		break;
-	case 'newParticipantArrived':
-		onNewParticipant(parsedMessage);
-		break;
-	case 'participantLeft':
-		onParticipantLeft(parsedMessage);
-		break;
-	case 'receiveVideoAnswer':
-		receiveVideoResponse(parsedMessage);
-		break;
-	case 'iceCandidate':
-		participants[parsedMessage.name].rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
-	        if (error) {
-		      console.error("Error adding candidate: " + error);
-		      return;
-	        }
-	    });
-	    break;
-	default:
-		console.error('Unrecognized message', parsedMessage);
-	}
-}
+        case 'roomId':
+            document.getElementById('room-header').innerText = 'ROOM ' + parsedMessage.roomId;
+            break;
+
+        case 'existingParticipants':
+            onExistingParticipants(parsedMessage);
+            break;
+        case 'newParticipantArrived':
+            onNewParticipant(parsedMessage);
+            break;
+        case 'participantLeft':
+            onParticipantLeft(parsedMessage);
+            break;
+        case 'receiveVideoAnswer':
+            receiveVideoResponse(parsedMessage);
+            break;
+        case 'iceCandidate':
+            participants[parsedMessage.name].rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
+                if (error) {
+                    console.error("Error adding candidate: " + error);
+                    return;
+                }
+            });
+            break;
+        default:
+            console.error('Unrecognized message', parsedMessage);
+    }
+};
 
 function createRoom() {
     userId = document.getElementById('user-create').value;

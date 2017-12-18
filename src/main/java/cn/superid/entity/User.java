@@ -115,7 +115,6 @@ public class User implements Closeable {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
             incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
                 @Override
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();

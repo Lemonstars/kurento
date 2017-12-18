@@ -33,13 +33,13 @@ public class CallHandler extends TextWebSocketHandler {
     private RoomManagerInterface roomManager;
 
     @Autowired
-    private UserManagerInterface registry;
+    private UserManagerInterface userManager;
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        User user = registry.getBySession(session);
+        User user = userManager.getBySessionId(session.getId());
 
         if (user != null) {
             log.debug("Incoming message from user '{}': {}", user.getUserId(), jsonMessage);
@@ -56,7 +56,7 @@ public class CallHandler extends TextWebSocketHandler {
                 break;
             case "receiveVideoFrom":
                 String senderName = jsonMessage.get("sender").getAsString();
-                User sender = registry.getByName(senderName);
+                User sender = userManager.getByUserId(senderName);
                 String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 user.receiveVideoFrom(sender, sdpOffer);
                 break;
@@ -79,36 +79,50 @@ public class CallHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        User user = registry.removeBySession(session);
+        User user = userManager.removeBySession(session);
         roomManager.getRoom(user.getRoomId()).leave(user);
     }
 
     private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
-        String roomId = UUIDGenerator.generatorUUID();
-        log.info("ROOMID {}", roomId);
-
         String userId = params.get("userId").getAsString();
-        log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
-        Room room = roomManager.getRoom(roomId);
-        User user = room.join(userId, session);
-        registry.register(user);
+        if(userManager.isUserFree(userId)){
+            String roomId = UUIDGenerator.generatorUUID();
+
+            log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
+
+            Room room = roomManager.getRoom(roomId);
+            User user = room.join(userId, session);
+
+            room.notifyPresenterRoomId(user, roomId);
+
+            userManager.register(user);
+        }else {
+            log.info("User {} is on another video", userId);
+        }
+
     }
 
     private void joinRoom(JsonObject params, WebSocketSession session) throws IOException{
-        String roomId = params.get("roomId").getAsString();
         String userId = params.get("userId").getAsString();
-        log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
-        Room room = roomManager.getRoom(roomId);
-        User user = room.join(userId, session);
-        registry.register(user);
+        if(userManager.isUserFree(userId)){
+            String roomId = params.get("roomId").getAsString();
+            log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
+
+            Room room = roomManager.getRoom(roomId);
+            User user = room.join(userId, session);
+            userManager.register(user);
+        }else {
+            log.info("User {} is on another video", userId);
+        }
+
     }
 
     private void leaveRoom(User user) throws IOException {
         Room room = roomManager.getRoom(user.getRoomId());
         room.leave(user);
-        if (room.getParticipants().isEmpty()) {
+        if (room.isRoomEmpty()) {
             roomManager.removeRoom(room);
         }
     }

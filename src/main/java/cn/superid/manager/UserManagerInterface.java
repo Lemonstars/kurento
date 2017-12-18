@@ -11,18 +11,18 @@ import org.springframework.web.socket.WebSocketSession;
 public interface UserManagerInterface {
 
     /**
-     * 通过姓名获取用户
-     * @param name
+     * 通过用户标识获取用户
+     * @param userId
      * @return
      */
-    User getByName(String name);
+    User getByUserId(String userId);
 
     /**
-     * 通过session获取用户
-     * @param session
+     * 通过sessionI获取用户
+     * @param sessionId
      * @return
      */
-    User getBySession(WebSocketSession session);
+    User getBySessionId(String sessionId);
 
     /**
      * 通过session清除用户记录
@@ -36,4 +36,13 @@ public interface UserManagerInterface {
      * @param user
      */
     void register(User user);
+
+    /**
+     * 判断用户是否在视频通话中:
+     * true 在通话中
+     *
+     * @param userId
+     * @return
+     */
+    boolean isUserFree(String userId);
 }

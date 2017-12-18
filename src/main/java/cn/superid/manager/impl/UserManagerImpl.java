@@ -12,31 +12,35 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class UserManagerImpl implements UserManagerInterface{
 
-  private final ConcurrentHashMap<String, User> usersByName = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, User> usersBySessionId = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, User> usersByUserId = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, User> usersBySessionId = new ConcurrentHashMap<>();
 
-  @Override
-  public void register(User user) {
-    usersByName.put(user.getUserId(), user);
-    usersBySessionId.put(user.getSession().getId(), user);
-  }
+    @Override
+    public void register(User user) {
+        usersByUserId.put(user.getUserId(), user);
+        usersBySessionId.put(user.getSession().getId(), user);
+    }
 
-  @Override
-  public User getByName(String name) {
-    return usersByName.get(name);
-  }
+    @Override
+    public User getByUserId(String userId) {
+        return usersByUserId.get(userId);
+    }
 
-  @Override
-  public User getBySession(WebSocketSession session) {
-    return usersBySessionId.get(session.getId());
-  }
+    @Override
+    public User getBySessionId(String sessionId) {
+        return usersBySessionId.get(sessionId);
+    }
 
-  @Override
-  public User removeBySession(WebSocketSession session) {
-    final User user = getBySession(session);
-    usersByName.remove(user.getUserId());
-    usersBySessionId.remove(session.getId());
-    return user;
-  }
+    @Override
+    public User removeBySession(WebSocketSession session) {
+        User user = getBySessionId(session.getId());
+        usersByUserId.remove(user.getUserId());
+        usersBySessionId.remove(session.getId());
+        return user;
+    }
 
+    @Override
+    public boolean isUserFree(String userId) {
+        return !usersByUserId.containsKey(userId);
+    }
 }

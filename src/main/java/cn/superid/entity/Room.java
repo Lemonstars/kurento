@@ -31,9 +31,6 @@ public class Room implements Closeable {
     private MediaPipeline pipeline;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
-    public String getRoomId() {
-        return roomId;
-    }
 
     public Room(String roomId, MediaPipeline pipeline) {
         this.roomId = roomId;
@@ -107,9 +104,9 @@ public class Room implements Closeable {
 
     }
 
-    public void sendParticipantNames(User user) throws IOException {
+    private void sendParticipantNames(User user) throws IOException {
         JsonArray participantsArray = new JsonArray();
-        for (User participant : this.getParticipants()) {
+        for (User participant : participants.values()) {
             if (!participant.equals(user)) {
                 JsonElement participantName = new JsonPrimitive(participant.getUserId());
                 participantsArray.add(participantName);
@@ -123,12 +120,21 @@ public class Room implements Closeable {
         user.sendMessage(existingParticipantsMsg);
     }
 
-    public Collection<User> getParticipants() {
-        return participants.values();
+    public boolean isRoomEmpty(){
+        return participants.values().isEmpty();
     }
 
-    public User getParticipant(String name) {
-        return participants.get(name);
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void notifyPresenterRoomId(User user, String roomId) throws IOException{
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "roomId");
+        jsonObject.addProperty("roomId", roomId);
+
+        user.sendMessage(jsonObject);
     }
 
     @Override
