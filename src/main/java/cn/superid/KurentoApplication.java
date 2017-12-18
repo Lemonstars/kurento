@@ -1,10 +1,5 @@
 package cn.superid;
 
-import cn.superid.handler.GroupCallHandler;
-import cn.superid.manager.RoomManagerInterface;
-import cn.superid.manager.UserManagerInterface;
-import cn.superid.manager.impl.RoomManager;
-import cn.superid.manager.impl.UserManager;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -25,18 +20,18 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class KurentoApplication implements WebSocketConfigurer {
 
     @Bean
-    public UserManagerInterface registry() {
-        return new UserManager();
+    public UserRegistry registry() {
+        return new UserRegistry();
     }
 
     @Bean
-    public RoomManagerInterface roomManager() {
+    public RoomManager roomManager() {
         return new RoomManager();
     }
 
     @Bean
-    public GroupCallHandler groupCallHandler() {
-        return new GroupCallHandler();
+    public CallHandler groupCallHandler() {
+        return new CallHandler();
     }
 
     @Bean
@@ -50,6 +45,7 @@ public class KurentoApplication implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(groupCallHandler(), "/groupCall");
+        registry.addHandler(groupCallHandler(), "/groupcall");
     }
+
 }
