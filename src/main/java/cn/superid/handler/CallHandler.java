@@ -1,26 +1,9 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package cn.superid.handler;
 
 import cn.superid.entity.Room;
 import cn.superid.manager.RoomManager;
 import cn.superid.manager.UserRegistry;
-import cn.superid.entity.UserSession;
+import cn.superid.entity.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -35,11 +18,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 
-/**
- * 
- * @author Ivan Gracia (izanmail@gmail.com)
- * @since 4.3.1
- */
 public class CallHandler extends TextWebSocketHandler {
 
   private static final Logger log = LoggerFactory.getLogger(CallHandler.class);
@@ -56,7 +34,7 @@ public class CallHandler extends TextWebSocketHandler {
   public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
     final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-    final UserSession user = registry.getBySession(session);
+    final User user = registry.getBySession(session);
 
     if (user != null) {
       log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
@@ -70,7 +48,7 @@ public class CallHandler extends TextWebSocketHandler {
         break;
       case "receiveVideoFrom":
         final String senderName = jsonMessage.get("sender").getAsString();
-        final UserSession sender = registry.getByName(senderName);
+        final User sender = registry.getByName(senderName);
         final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
         user.receiveVideoFrom(sender, sdpOffer);
         break;
@@ -93,7 +71,7 @@ public class CallHandler extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-    UserSession user = registry.removeBySession(session);
+    User user = registry.removeBySession(session);
     roomManager.getRoom(user.getRoomName()).leave(user);
   }
 
@@ -103,11 +81,11 @@ public class CallHandler extends TextWebSocketHandler {
     log.info("PARTICIPANT {}: trying to join room {}", name, roomName);
 
     Room room = roomManager.getRoom(roomName);
-    final UserSession user = room.join(name, session);
+    final User user = room.join(name, session);
     registry.register(user);
   }
 
-  private void leaveRoom(UserSession user) throws IOException {
+  private void leaveRoom(User user) throws IOException {
     final Room room = roomManager.getRoom(user.getRoomName());
     room.leave(user);
     if (room.getParticipants().isEmpty()) {

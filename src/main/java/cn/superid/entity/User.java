@@ -1,20 +1,3 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package cn.superid.entity;
 
 import com.google.gson.JsonObject;
@@ -28,12 +11,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- *
- * @author Ivan Gracia (izanmail@gmail.com)
- * @since 4.3.1
- */
-public class UserSession implements Closeable {
+public class User implements Closeable {
 
     private final String name;
     private final String roomName;
@@ -44,8 +22,8 @@ public class UserSession implements Closeable {
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
 
-    public UserSession(final String name, String roomName, final WebSocketSession session,
-                       MediaPipeline pipeline) {
+    public User(final String name, String roomName, final WebSocketSession session,
+                MediaPipeline pipeline) {
         this.name = name;
         this.roomName = roomName;
         this.session = session;
@@ -110,7 +88,7 @@ public class UserSession implements Closeable {
     }
 
 
-    public void receiveVideoFrom(UserSession sender, String sdpOffer) throws IOException{
+    public void receiveVideoFrom(User sender, String sdpOffer) throws IOException{
         WebRtcEndpoint webRtcEndpoint = getEndpointForUser(sender);
         String ipSdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 
@@ -124,7 +102,7 @@ public class UserSession implements Closeable {
     }
 
 
-  private WebRtcEndpoint getEndpointForUser(final UserSession sender) {
+  private WebRtcEndpoint getEndpointForUser(final User sender) {
     if (sender.getName().equals(name)) {
       return outgoingMedia;
     }
@@ -180,10 +158,10 @@ public class UserSession implements Closeable {
     if (this == obj) {
       return true;
     }
-    if (obj == null || !(obj instanceof UserSession)) {
+    if (obj == null || !(obj instanceof User)) {
       return false;
     }
-    UserSession other = (UserSession) obj;
+    User other = (User) obj;
     boolean eq = name.equals(other.name);
     eq &= roomName.equals(other.roomName);
     return eq;

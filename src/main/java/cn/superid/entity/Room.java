@@ -1,20 +1,3 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package cn.superid.entity;
 
 import com.google.gson.JsonArray;
@@ -36,14 +19,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Ivan Gracia (izanmail@gmail.com)
- * @since 4.3.1
- */
 public class Room implements Closeable {
   private final Logger log = LoggerFactory.getLogger(Room.class);
 
-  private final ConcurrentMap<String, UserSession> participants = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
   private final MediaPipeline pipeline;
   private final String name;
 
@@ -62,22 +41,22 @@ public class Room implements Closeable {
     this.close();
   }
 
-  public UserSession join(String userName, WebSocketSession session) throws IOException {
+  public User join(String userName, WebSocketSession session) throws IOException {
     log.info("ROOM {}: adding participant {}", userName, userName);
-    final UserSession participant = new UserSession(userName, this.name, session, this.pipeline);
+    final User participant = new User(userName, this.name, session, this.pipeline);
     joinRoom(participant);
     participants.put(participant.getName(), participant);
     sendParticipantNames(participant);
     return participant;
   }
 
-  public void leave(UserSession user) throws IOException {
+  public void leave(User user) throws IOException {
     log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.name);
     this.removeParticipant(user.getName());
     user.close();
   }
 
-  private Collection<String> joinRoom(UserSession newParticipant) throws IOException {
+  private Collection<String> joinRoom(User newParticipant) throws IOException {
     final JsonObject newParticipantMsg = new JsonObject();
     newParticipantMsg.addProperty("id", "newParticipantArrived");
     newParticipantMsg.addProperty("name", newParticipant.getName());
@@ -86,7 +65,7 @@ public class Room implements Closeable {
     log.debug("ROOM {}: notifying other participants of new participant {}", name,
         newParticipant.getName());
 
-    for (final UserSession participant : participants.values()) {
+    for (final User participant : participants.values()) {
       try {
         participant.sendMessage(newParticipantMsg);
       } catch (final IOException e) {
@@ -107,7 +86,7 @@ public class Room implements Closeable {
     final JsonObject participantLeftJson = new JsonObject();
     participantLeftJson.addProperty("id", "participantLeft");
     participantLeftJson.addProperty("name", name);
-    for (final UserSession participant : participants.values()) {
+    for (final User participant : participants.values()) {
       try {
         participant.cancelVideoFrom(name);
         participant.sendMessage(participantLeftJson);
@@ -123,10 +102,10 @@ public class Room implements Closeable {
 
   }
 
-  public void sendParticipantNames(UserSession user) throws IOException {
+  public void sendParticipantNames(User user) throws IOException {
 
     final JsonArray participantsArray = new JsonArray();
-    for (final UserSession participant : this.getParticipants()) {
+    for (final User participant : this.getParticipants()) {
       if (!participant.equals(user)) {
         final JsonElement participantName = new JsonPrimitive(participant.getName());
         participantsArray.add(participantName);
@@ -141,17 +120,17 @@ public class Room implements Closeable {
     user.sendMessage(existingParticipantsMsg);
   }
 
-  public Collection<UserSession> getParticipants() {
+  public Collection<User> getParticipants() {
     return participants.values();
   }
 
-  public UserSession getParticipant(String name) {
+  public User getParticipant(String name) {
     return participants.get(name);
   }
 
   @Override
   public void close() {
-    for (final UserSession user : participants.values()) {
+    for (final User user : participants.values()) {
       try {
         user.close();
       } catch (IOException e) {
