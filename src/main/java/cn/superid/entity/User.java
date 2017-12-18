@@ -16,21 +16,18 @@ import java.util.concurrent.ConcurrentMap;
  * @date 2017-12-18
  */
 public class User implements Closeable {
-
-
-    private final String name;
-    private final String roomName;
+    private final String userId;
+    private final String roomId;
     private final WebSocketSession session;
     private final MediaPipeline pipeline;
 
     private final WebRtcEndpoint outgoingMedia;
     private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-
-    public User(final String name, String roomName, final WebSocketSession session,
+    public User(String userId, String roomId, final WebSocketSession session,
                 MediaPipeline pipeline) {
-        this.name = name;
-        this.roomName = roomName;
+        this.userId = userId;
+        this.roomId = roomId;
         this.session = session;
         this.pipeline = pipeline;
 
@@ -42,7 +39,7 @@ public class User implements Closeable {
             public void onEvent(IceCandidateFoundEvent event) {
                 JsonObject response = new JsonObject();
                 response.addProperty("id", "iceCandidate");
-                response.addProperty("name", name);
+                response.addProperty("name", userId);
                 response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                 try {
                     synchronized (session) {
@@ -54,12 +51,12 @@ public class User implements Closeable {
         });
     }
 
-    public String getName() {
-        return name;
+    public String getUserId() {
+        return userId;
     }
 
-    public String getRoomName() {
-        return this.roomName;
+    public String getRoomId() {
+        return this.roomId;
     }
 
     public WebSocketSession getSession() {
@@ -99,7 +96,7 @@ public class User implements Closeable {
 
         JsonObject scParams = new JsonObject();
         scParams.addProperty("id", "receiveVideoAnswer");
-        scParams.addProperty("name", sender.getName());
+        scParams.addProperty("name", sender.getUserId());
         scParams.addProperty("sdpAnswer", ipSdpAnswer);
 
         sendMessage(scParams);
@@ -107,13 +104,13 @@ public class User implements Closeable {
     }
 
 
-    private WebRtcEndpoint getEndpointForUser(final User sender) {
-        if (sender.getName().equals(name)) {
+    private WebRtcEndpoint getEndpointForUser(User sender) {
+        if (sender.getUserId().equals(userId)) {
             return outgoingMedia;
         }
 
 
-        WebRtcEndpoint incoming = incomingMedia.get(sender.getName());
+        WebRtcEndpoint incoming = incomingMedia.get(sender.getUserId());
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
@@ -123,7 +120,7 @@ public class User implements Closeable {
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();
                     response.addProperty("id", "iceCandidate");
-                    response.addProperty("name", sender.getName());
+                    response.addProperty("name", sender.getUserId());
                     response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                     try {
                         synchronized (session) {
@@ -134,7 +131,7 @@ public class User implements Closeable {
                 }
             });
 
-            incomingMedia.put(sender.getName(), incoming);
+            incomingMedia.put(sender.getUserId(), incoming);
         }
 
         sender.getOutgoingWebRtcPeer().connect(incoming);
@@ -143,7 +140,7 @@ public class User implements Closeable {
     }
 
     public void addCandidate(IceCandidate candidate, String name) {
-        if (this.name.compareTo(name) == 0) {
+        if (this.userId.compareTo(name) == 0) {
             outgoingMedia.addIceCandidate(candidate);
         } else {
             WebRtcEndpoint webRtc = incomingMedia.get(name);
@@ -163,16 +160,16 @@ public class User implements Closeable {
             return false;
         }
         User other = (User) obj;
-        boolean eq = name.equals(other.name);
-        eq &= roomName.equals(other.roomName);
+        boolean eq = userId.equals(other.userId);
+        eq &= roomId.equals(other.roomId);
         return eq;
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = 31 * result + name.hashCode();
-        result = 31 * result + roomName.hashCode();
+        result = 31 * result + userId.hashCode();
+        result = 31 * result + roomId.hashCode();
         return result;
     }
 

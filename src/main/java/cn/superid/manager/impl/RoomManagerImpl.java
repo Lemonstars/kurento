@@ -16,32 +16,32 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class RoomManagerImpl implements RoomManagerInterface{
 
-  private final Logger log = LoggerFactory.getLogger(RoomManagerImpl.class);
+    private final Logger log = LoggerFactory.getLogger(RoomManagerImpl.class);
 
-  @Autowired
-  private KurentoClient kurento;
+    @Autowired
+    private KurentoClient kurento;
 
-  private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
 
-  @Override
-  public Room getRoom(String roomName) {
-    log.debug("Searching for room {}", roomName);
-    Room room = rooms.get(roomName);
+    @Override
+    public Room getRoom(String roomId) {
+        log.debug("Searching for room {}", roomId);
+        Room room = rooms.get(roomId);
 
-    if (room == null) {
-      log.debug("Room {} not existent. Will create now!", roomName);
-      room = new Room(roomName, kurento.createMediaPipeline());
-      rooms.put(roomName, room);
+        if (room == null) {
+            log.debug("Room {} not existent. Will create now!", roomId);
+            room = new Room(roomId, kurento.createMediaPipeline());
+            rooms.put(roomId, room);
+        }
+        log.debug("Room {} found!", roomId);
+        return room;
     }
-    log.debug("Room {} found!", roomName);
-    return room;
-  }
 
-  @Override
-  public void removeRoom(Room room) {
-    this.rooms.remove(room.getName());
-    room.close();
-    log.info("Room {} removed and closed", room.getName());
-  }
+    @Override
+    public void removeRoom(Room room) {
+        rooms.remove(room.getRoomId());
+        room.close();
+        log.info("Room {} removed and closed", room.getRoomId());
+    }
 
 }

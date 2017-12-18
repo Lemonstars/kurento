@@ -17,7 +17,7 @@ public class UserManagerImpl implements UserManagerInterface{
 
   @Override
   public void register(User user) {
-    usersByName.put(user.getName(), user);
+    usersByName.put(user.getUserId(), user);
     usersBySessionId.put(user.getSession().getId(), user);
   }
 
@@ -34,7 +34,7 @@ public class UserManagerImpl implements UserManagerInterface{
   @Override
   public User removeBySession(WebSocketSession session) {
     final User user = getBySession(session);
-    usersByName.remove(user.getName());
+    usersByName.remove(user.getUserId());
     usersBySessionId.remove(session.getId());
     return user;
   }

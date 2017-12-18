@@ -41,7 +41,7 @@ public class CallHandler extends TextWebSocketHandler {
     final User user = registry.getBySession(session);
 
     if (user != null) {
-      log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
+      log.debug("Incoming message from user '{}': {}", user.getUserId(), jsonMessage);
     } else {
       log.debug("Incoming message from new user: {}", jsonMessage);
     }
@@ -76,7 +76,7 @@ public class CallHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
     User user = registry.removeBySession(session);
-    roomManager.getRoom(user.getRoomName()).leave(user);
+    roomManager.getRoom(user.getRoomId()).leave(user);
   }
 
   private void joinRoom(JsonObject params, WebSocketSession session) throws IOException {
@@ -90,7 +90,7 @@ public class CallHandler extends TextWebSocketHandler {
   }
 
   private void leaveRoom(User user) throws IOException {
-    final Room room = roomManager.getRoom(user.getRoomName());
+    final Room room = roomManager.getRoom(user.getRoomId());
     room.leave(user);
     if (room.getParticipants().isEmpty()) {
       roomManager.removeRoom(room);
