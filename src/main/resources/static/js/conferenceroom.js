@@ -1,6 +1,6 @@
 var ws = new WebSocket('wss://' + location.host + '/groupcall');
 var participants = {};
-var name;
+var userId;
 
 window.onbeforeunload = function() {
 	ws.close();
@@ -36,20 +36,38 @@ ws.onmessage = function(message) {
 	}
 }
 
-function register() {
-	name = document.getElementById('name').value;
-	var room = document.getElementById('roomName').value;
+function createRoom() {
+    userId = document.getElementById('user-create').value;
 
-	document.getElementById('room-header').innerText = 'ROOM ' + room;
-	document.getElementById('join').style.display = 'none';
+	document.getElementById('create').style.display = 'none';
+    document.getElementById('join').style.display = 'none';
 	document.getElementById('room').style.display = 'block';
 
 	var message = {
-		id : 'joinRoom',
-		name : name,
-		room : room,
-	}
+		id : 'createRoom',
+        userId : userId
+	};
+
 	sendMessage(message);
+}
+
+
+function joinRoom() {
+    userId = document.getElementById('user-join').value;
+    var roomId = document.getElementById('room-join').value;
+
+    document.getElementById('room-header').innerText = 'ROOM ' + roomId;
+    document.getElementById('create').style.display = 'none';
+    document.getElementById('join').style.display = 'none';
+    document.getElementById('room').style.display = 'block';
+
+    var message = {
+        id : 'joinRoom',
+        userId: userId,
+        roomId: roomId
+    };
+
+    sendMessage(message);
 }
 
 function onNewParticipant(request) {
@@ -85,16 +103,17 @@ function onExistingParticipants(msg) {
 		}
 	};
 
-	console.log(name + " registered in room " + room);
-	var participant = new Participant(name);
-	participants[name] = participant;
+	console.log(userId + " registered in room " + userId);
+	var participant = new Participant(userId);
+	participants[userId] = participant;
 	var video = participant.getVideoElement();
 
 	var options = {
 	      localVideo: video,
 	      mediaConstraints: constraints,
 	      onicecandidate: participant.onIceCandidate.bind(participant)
-	    }
+	    };
+
 	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
 		function (error) {
 		  if(error) {
@@ -115,6 +134,7 @@ function leaveRoom() {
 		participants[key].dispose();
 	}
 
+    document.getElementById('create').style.display = 'block';
 	document.getElementById('join').style.display = 'block';
 	document.getElementById('room').style.display = 'none';
 

@@ -1,7 +1,6 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <link rel="styleSheet" href="style.css" type="text/css" media="screen">
 
     <script src="./js/conferenceroom.js"></script>
     <script src="./js/participant.js"></script>
@@ -10,22 +9,33 @@
 <body>
 <div id="container">
     <div id="wrapper">
-        <div id="join" class="animate join">
-            <h1>Join a Room</h1>
-            <form onsubmit="register(); return false;" accept-charset="UTF-8">
+        <div id="create" class="animate join">
+            <h1>Create a Room</h1>
+            <form onsubmit="createRoom(); return false;" accept-charset="UTF-8">
                 <p>
-                    <input type="text" name="name" value="" id="name"
-                           placeholder="Username" required>
-                </p>
-                <p>
-                    <input type="text" name="room" value="" id="roomName"
-                           placeholder="Room" required>
+                    <input type="text" name="userId" value="" id="user-create" placeholder="userId" required>
                 </p>
                 <p class="submit">
-                    <input type="submit" name="commit" value="Join!">
+                    <input type="submit" name="commit" value="create">
                 </p>
             </form>
         </div>
+
+        <div id="join" class="animate join">
+            <h1>Join a Room</h1>
+            <form onsubmit="joinRoom(); return false;" accept-charset="UTF-8">
+                <p>
+                    <input type="text" name="user" value="" id="user-join" placeholder="userId" required>
+                </p>
+                <p>
+                    <input type="text" name="room" value="" id="room-join" placeholder="roomId" required>
+                </p>
+                <p class="submit">
+                    <input type="submit" name="commit" value="join">
+                </p>
+            </form>
+        </div>
+
         <div id="room" style="display: none;">
             <h2 id="room-header"></h2>
             <div id="participants"></div>
