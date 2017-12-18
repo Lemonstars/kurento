@@ -15,7 +15,7 @@
  *
  */
 
-package cn.superid;
+package cn.superid.entity;
 
 import com.google.gson.JsonObject;
 import org.kurento.client.*;

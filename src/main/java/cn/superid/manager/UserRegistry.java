@@ -15,8 +15,9 @@
  *
  */
 
-package cn.superid;
+package cn.superid.manager;
 
+import cn.superid.entity.UserSession;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.concurrent.ConcurrentHashMap;

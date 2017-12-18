@@ -15,8 +15,12 @@
  *
  */
 
-package cn.superid;
+package cn.superid.handler;
 
+import cn.superid.entity.Room;
+import cn.superid.manager.RoomManager;
+import cn.superid.manager.UserRegistry;
+import cn.superid.entity.UserSession;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;

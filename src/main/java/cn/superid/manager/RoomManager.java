@@ -15,8 +15,9 @@
  *
  */
 
-package cn.superid;
+package cn.superid.manager;
 
+import cn.superid.entity.Room;
 import org.kurento.client.KurentoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

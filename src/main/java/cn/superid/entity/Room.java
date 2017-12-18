@@ -15,7 +15,7 @@
  *
  */
 
-package cn.superid;
+package cn.superid.entity;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

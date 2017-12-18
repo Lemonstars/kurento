@@ -1,5 +1,8 @@
 package cn.superid;
 
+import cn.superid.handler.CallHandler;
+import cn.superid.manager.RoomManager;
+import cn.superid.manager.UserRegistry;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
