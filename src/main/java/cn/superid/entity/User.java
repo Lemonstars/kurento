@@ -44,9 +44,7 @@ public class User implements Closeable {
                 response.addProperty("name", userId);
                 response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                 try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
+                   sendMessage(response);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -121,9 +119,7 @@ public class User implements Closeable {
                     response.addProperty("name", sender.getUserId());
                     response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                     try {
-                        synchronized (session) {
-                            session.sendMessage(new TextMessage(response.toString()));
-                        }
+                        sendMessage(response);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

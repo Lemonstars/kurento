@@ -17,22 +17,18 @@ function Participant(name) {
 
     span.appendChild(document.createTextNode(name));
 
-    video.id = 'video-'+name;
+    video.id = 'video-' + name;
     video.autoplay = true;
     video.controls = false;
 
-    this.getElement = function(){
-        return container
+
+    this.getElement = function() {
+        return container;
     };
 
-    this.getVideoElement = function () {
+    this.getVideoElement = function() {
         return video;
     };
-
-
-    function isPresentMainParticipant() {
-        return ((document.getElementsByClassName(PARTICIPANT_MAIN_CLASS)).length != 0);
-    }
 
     function switchContainerClass() {
         if (container.className === PARTICIPANT_CLASS) {
@@ -47,17 +43,13 @@ function Participant(name) {
         }
     }
 
-    this.onIceCandidate = function (candidate, wp) {
-        var  message = {
-            id: 'onIceCandidate',
-            candidate: candidate,
-            name: name
-        };
-        sendMessage(message);
-    };
+    function isPresentMainParticipant() {
+        return ((document.getElementsByClassName(PARTICIPANT_MAIN_CLASS)).length != 0);
+    }
 
     this.offerToReceiveVideo = function(error, offerSdp, wp){
-        if (error) return console.error ("sdp offer error");
+        if (error) return console.error ("sdp offer error")
+        console.log('Invoking SDP offer callback function');
         var msg =  {
             id : "receiveVideoFrom",
             sender : name,
@@ -66,5 +58,23 @@ function Participant(name) {
         sendMessage(msg);
     };
 
+
+    this.onIceCandidate = function (candidate, wp) {
+        console.log("Local candidate" + JSON.stringify(candidate));
+
+        var message = {
+            id: 'onIceCandidate',
+            candidate: candidate,
+            name: name
+        };
+        sendMessage(message);
+    };
+
     Object.defineProperty(this, 'rtcPeer', { writable: true});
+
+    this.dispose = function() {
+        console.log('Disposing participant ' + this.name);
+        this.rtcPeer.dispose();
+        container.parentNode.removeChild(container);
+    };
 }

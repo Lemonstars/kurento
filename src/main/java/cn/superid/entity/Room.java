@@ -44,7 +44,7 @@ public class Room implements Closeable {
     public User joinNewRoom(String userId, WebSocketSession session) throws IOException{
         User roomCreator = new User(userId, this.roomId, session, this.pipeline);
         notifyClientRoomId(roomCreator);
-        notifyNewParticipantArrived(roomCreator.getUserId());
+        notifyNewParticipantArrived(userId);
         participants.put(userId, roomCreator);
         notifyExistingParticipants(roomCreator);
 
@@ -63,7 +63,7 @@ public class Room implements Closeable {
      */
     public User joinExistingRoom(String userId, WebSocketSession session) throws IOException {
         User participant = new User(userId, this.roomId, session, this.pipeline);
-        notifyNewParticipantArrived(participant.getUserId());
+        notifyNewParticipantArrived(userId);
         participants.put(userId, participant);
         notifyExistingParticipants(participant);
 

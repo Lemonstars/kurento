@@ -98,8 +98,6 @@ public class GroupCallHandler extends TextWebSocketHandler {
             User user = userManager.getByUserId(viewerId);
             user.notifyVideoExist(viewerId);
         }
-
-
     }
 
     private void leaveRoom(User user) throws IOException {

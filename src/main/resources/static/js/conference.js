@@ -30,6 +30,7 @@ ws.onmessage = function (message) {
         case 'participantLeft':
             onParticipantLeft(parseMessage);
             break;
+
         case 'captureRoomId':
             console.log('roomId:'+ parseMessage.roomId);
             break;
