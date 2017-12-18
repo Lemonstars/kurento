@@ -1,9 +1,9 @@
 package cn.superid.handler;
 
 import cn.superid.entity.Room;
-import cn.superid.manager.impl.RoomManagerImpl;
-import cn.superid.manager.impl.UserManagerImpl;
 import cn.superid.entity.User;
+import cn.superid.manager.RoomManagerInterface;
+import cn.superid.manager.UserManagerInterface;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -29,10 +29,10 @@ public class CallHandler extends TextWebSocketHandler {
   private static final Gson gson = new GsonBuilder().create();
 
   @Autowired
-  private RoomManagerImpl roomManager;
+  private RoomManagerInterface roomManager;
 
   @Autowired
-  private UserManagerImpl registry;
+  private UserManagerInterface registry;
 
   @Override
   public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
