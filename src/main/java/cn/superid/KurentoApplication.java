@@ -1,8 +1,8 @@
 package cn.superid;
 
 import cn.superid.handler.CallHandler;
-import cn.superid.manager.RoomManager;
-import cn.superid.manager.UserRegistry;
+import cn.superid.manager.impl.RoomManagerImpl;
+import cn.superid.manager.impl.UserManagerImpl;
 import org.kurento.client.KurentoClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,13 +23,13 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class KurentoApplication implements WebSocketConfigurer {
 
     @Bean
-    public UserRegistry registry() {
-        return new UserRegistry();
+    public UserManagerImpl registry() {
+        return new UserManagerImpl();
     }
 
     @Bean
-    public RoomManager roomManager() {
-        return new RoomManager();
+    public RoomManagerImpl roomManager() {
+        return new RoomManagerImpl();
     }
 
     @Bean

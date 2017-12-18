@@ -1,8 +1,8 @@
 package cn.superid.handler;
 
 import cn.superid.entity.Room;
-import cn.superid.manager.RoomManager;
-import cn.superid.manager.UserRegistry;
+import cn.superid.manager.impl.RoomManagerImpl;
+import cn.superid.manager.impl.UserManagerImpl;
 import cn.superid.entity.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,6 +18,10 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 
+/**
+ * @author 刘兴
+ * @date 2017-12-18
+ */
 public class CallHandler extends TextWebSocketHandler {
 
   private static final Logger log = LoggerFactory.getLogger(CallHandler.class);
@@ -25,10 +29,10 @@ public class CallHandler extends TextWebSocketHandler {
   private static final Gson gson = new GsonBuilder().create();
 
   @Autowired
-  private RoomManager roomManager;
+  private RoomManagerImpl roomManager;
 
   @Autowired
-  private UserRegistry registry;
+  private UserManagerImpl registry;
 
   @Override
   public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
