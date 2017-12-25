@@ -27,11 +27,11 @@ public class RoomManagerImpl implements RoomManagerInterface{
 
     @Override
     public Room getRoom(String roomId) {
-        log.debug("Searching for room {}", roomId);
+       log.info("Searching for room {}", roomId);
         Room room = rooms.get(roomId);
 
         if (room == null) {
-            log.debug("Room {} not existent. Will create now!", roomId);
+           log.info("Room {} not existent. Will create now!", roomId);
 
             MediaPipeline pipeline = kurento.createMediaPipeline();
             Composite composite = new Composite.Builder(pipeline).build();
@@ -39,7 +39,7 @@ public class RoomManagerImpl implements RoomManagerInterface{
             room = new Room(roomId, pipeline, composite);
             rooms.put(roomId, room);
         }
-        log.debug("Room {} found!", roomId);
+       log.info("Room {} found!", roomId);
         return room;
     }
 

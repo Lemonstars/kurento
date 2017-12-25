@@ -2,7 +2,6 @@ package cn.superid.manager.impl;
 
 import cn.superid.entity.User;
 import cn.superid.manager.UserManagerInterface;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,10 +31,10 @@ public class UserManagerImpl implements UserManagerInterface{
     }
 
     @Override
-    public User removeBySession(WebSocketSession session) {
-        User user = getBySessionId(session.getId());
-        usersByUserId.remove(user.getUserId());
-        usersBySessionId.remove(session.getId());
+    public User removeByUserId(String userId) {
+        User user = getByUserId(userId);
+        usersByUserId.remove(userId);
+        usersBySessionId.remove(user.getSession().getId());
         return user;
     }
 

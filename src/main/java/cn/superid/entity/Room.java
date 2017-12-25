@@ -53,13 +53,13 @@ public class Room implements Closeable {
     }
 
     public void leave(User user) throws IOException {
-        log.debug("PARTICIPANT {}: Leaving room {}", user.getUserId(), this.roomId);
+        log.info("PARTICIPANT {}: Leaving room {}", user.getUserId(), this.roomId);
         this.removeParticipant(user.getUserId());
         user.close();
     }
 
     private void joinRoom(User newParticipant) throws IOException {
-        log.debug("ROOM {}: notifying other participants of new participant {}", roomId,
+        log.info("ROOM {}: notifying other participants of new participant {}", roomId,
                 newParticipant.getUserId());
 
         String userId = newParticipant.getUserId();
@@ -67,7 +67,7 @@ public class Room implements Closeable {
             try {
                 participant.notifyNewUserId(userId);
             } catch (IOException e) {
-                log.debug("ROOM {}: participant {} could not be notified", roomId, participant.getUserId(), e);
+               log.info("ROOM {}: participant {} could not be notified", roomId, participant.getUserId(), e);
             }
         }
     }
@@ -75,7 +75,7 @@ public class Room implements Closeable {
     private void removeParticipant(String userId) throws IOException {
         participants.remove(userId);
 
-        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
+       log.info("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
 
         List<String> unnotifiedParticipants = new ArrayList<>();
         for (User participant : participants.values()) {
@@ -88,7 +88,7 @@ public class Room implements Closeable {
         }
 
         if (!unnotifiedParticipants.isEmpty()) {
-            log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.roomId,
+           log.info("ROOM {}: The users {} could not be notified that {} left the room", this.roomId,
                     unnotifiedParticipants, userId);
         }
 
@@ -103,7 +103,7 @@ public class Room implements Closeable {
             }
         }
 
-        log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
+       log.info("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
         user.notifyExistingUserId(participantsArray);
     }
 
@@ -122,7 +122,7 @@ public class Room implements Closeable {
             try {
                 user.close();
             } catch (IOException e) {
-                log.debug("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getUserId(), e);
+               log.info("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getUserId(), e);
             }
         }
 
@@ -141,7 +141,7 @@ public class Room implements Closeable {
             }
         });
 
-        log.debug("Room {} closed", this.roomId);
+       log.info("Room {} closed", this.roomId);
     }
 
 }

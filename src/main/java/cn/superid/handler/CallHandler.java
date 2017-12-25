@@ -12,7 +12,6 @@ import org.kurento.client.IceCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -42,9 +41,9 @@ public class CallHandler extends TextWebSocketHandler {
         User user = userManager.getBySessionId(session.getId());
 
         if (user != null) {
-            log.debug("Incoming message from user '{}': {}", user.getUserId(), jsonMessage);
+           log.debug("Incoming message from user '{}': {}", user.getUserId(), jsonMessage);
         } else {
-            log.debug("Incoming message from new user: {}", jsonMessage);
+           log.debug("Incoming message from new user: {}", jsonMessage);
         }
 
         switch (jsonMessage.get("id").getAsString()) {
@@ -77,11 +76,6 @@ public class CallHandler extends TextWebSocketHandler {
         }
     }
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        User user = userManager.removeBySession(session);
-        roomManager.getRoom(user.getRoomId()).leave(user);
-    }
 
     private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
         String userId = params.get("userId").getAsString();
@@ -126,6 +120,7 @@ public class CallHandler extends TextWebSocketHandler {
     }
 
     private void leaveRoom(User user) throws IOException {
+        userManager.removeByUserId(user.getUserId());
         Room room = roomManager.getRoom(user.getRoomId());
         room.leave(user);
         if (room.isRoomEmpty()) {

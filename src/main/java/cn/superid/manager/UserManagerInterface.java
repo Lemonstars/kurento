@@ -1,7 +1,6 @@
 package cn.superid.manager;
 
 import cn.superid.entity.User;
-import org.springframework.web.socket.WebSocketSession;
 
 /**
  * @author 刘兴
@@ -18,18 +17,18 @@ public interface UserManagerInterface {
     User getByUserId(String userId);
 
     /**
-     * 通过sessionI获取用户
+     * 通过session获取用户
      * @param sessionId
      * @return
      */
     User getBySessionId(String sessionId);
 
     /**
-     * 通过session清除用户记录
-     * @param session
+     * 通过用户标识清除用户数据
+     * @param userId
      * @return
      */
-    User removeBySession(WebSocketSession session);
+    User removeByUserId(String userId);
 
     /**
      * 存储用户记录
@@ -39,7 +38,7 @@ public interface UserManagerInterface {
 
     /**
      * 判断用户是否在视频通话中:
-     * true 在通话中
+     * false 在通话中
      *
      * @param userId
      * @return
