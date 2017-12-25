@@ -1,5 +1,6 @@
 package cn.superid.entity;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
@@ -16,13 +17,13 @@ import java.util.concurrent.ConcurrentMap;
  * @date 2017-12-18
  */
 public class User implements Closeable {
-    private final String userId;
-    private final String roomId;
-    private final WebSocketSession session;
-    private final MediaPipeline pipeline;
+    private String userId;
+    private String roomId;
+    private WebSocketSession session;
+    private MediaPipeline pipeline;
 
-    private final WebRtcEndpoint outgoingMedia;
-    private final ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
+    private WebRtcEndpoint outgoingMedia;
+    private ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
     public User(String userId, String roomId, final WebSocketSession session,
                 MediaPipeline pipeline) {
@@ -170,6 +171,56 @@ public class User implements Closeable {
         result = 31 * result + userId.hashCode();
         result = 31 * result + roomId.hashCode();
         return result;
+    }
+
+
+    /**
+     * 通知用户已加入其它的视频会议
+     * @throws IOException
+     */
+    public void notifyUserBusy() throws IOException{
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "userState");
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 通知视频发起者房间的标识
+     * @param roomId
+     * @throws IOException
+     */
+    public void notifyPresenterRoomId(String roomId) throws IOException{
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "roomId");
+        jsonObject.addProperty("roomId", roomId);
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 通知有新用户加入，告知用户标识
+     * @param userId
+     * @throws IOException
+     */
+    void notifyNewUserId(String userId) throws IOException{
+        JsonObject newParticipantMsg = new JsonObject();
+        newParticipantMsg.addProperty("id", "newParticipantArrived");
+        newParticipantMsg.addProperty("name", userId);
+
+        sendMessage(newParticipantMsg);
+    }
+
+    /**
+     * 在刚加入房间时，通知在房间内其他用户的标识
+     * @param existingUsers
+     * @throws IOException
+     */
+    void notifyExistingUserId(JsonArray existingUsers) throws IOException{
+        JsonObject existingParticipantsMsg = new JsonObject();
+        existingParticipantsMsg.addProperty("id", "existingParticipants");
+        existingParticipantsMsg.add("data", existingUsers);
+        sendMessage(existingParticipantsMsg);
     }
 
 }

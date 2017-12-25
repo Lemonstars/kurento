@@ -94,11 +94,14 @@ public class CallHandler extends TextWebSocketHandler {
             Room room = roomManager.getRoom(roomId);
             User user = room.join(userId, session);
 
-            room.notifyPresenterRoomId(user, roomId);
+            user.notifyPresenterRoomId(roomId);
 
             userManager.register(user);
         }else {
             log.info("User {} is on another video", userId);
+
+            User user = userManager.getByUserId(userId);
+            user.notifyUserBusy();
         }
 
     }
@@ -115,6 +118,9 @@ public class CallHandler extends TextWebSocketHandler {
             userManager.register(user);
         }else {
             log.info("User {} is on another video", userId);
+
+            User user = userManager.getByUserId(userId);
+            user.notifyUserBusy();
         }
 
     }

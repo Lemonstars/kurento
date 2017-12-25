@@ -14,7 +14,6 @@ import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -58,25 +57,18 @@ public class Room implements Closeable {
         user.close();
     }
 
-    private Collection<String> joinRoom(User newParticipant) throws IOException {
-        JsonObject newParticipantMsg = new JsonObject();
-        newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("name", newParticipant.getUserId());
-
-        List<String> participantsList = new ArrayList<>(participants.values().size());
+    private void joinRoom(User newParticipant) throws IOException {
         log.debug("ROOM {}: notifying other participants of new participant {}", roomId,
                 newParticipant.getUserId());
 
+        String userId = newParticipant.getUserId();
         for (User participant : participants.values()) {
             try {
-                participant.sendMessage(newParticipantMsg);
+                participant.notifyNewUserId(userId);
             } catch (IOException e) {
                 log.debug("ROOM {}: participant {} could not be notified", roomId, participant.getUserId(), e);
             }
-            participantsList.add(participant.getUserId());
         }
-
-        return participantsList;
     }
 
     private void removeParticipant(String name) throws IOException {
@@ -113,11 +105,8 @@ public class Room implements Closeable {
             }
         }
 
-        JsonObject existingParticipantsMsg = new JsonObject();
-        existingParticipantsMsg.addProperty("id", "existingParticipants");
-        existingParticipantsMsg.add("data", participantsArray);
         log.debug("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
-        user.sendMessage(existingParticipantsMsg);
+        user.notifyExistingUserId(participantsArray);
     }
 
     public boolean isRoomEmpty(){
@@ -127,14 +116,6 @@ public class Room implements Closeable {
 
     public String getRoomId() {
         return roomId;
-    }
-
-    public void notifyPresenterRoomId(User user, String roomId) throws IOException{
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("id", "roomId");
-        jsonObject.addProperty("roomId", roomId);
-
-        user.sendMessage(jsonObject);
     }
 
     @Override

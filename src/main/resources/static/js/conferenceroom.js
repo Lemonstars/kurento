@@ -14,6 +14,10 @@ ws.onmessage = function(message) {
         case 'roomId':
             document.getElementById('room-header').innerText = 'ROOM ' + parsedMessage.roomId;
             break;
+        case 'userState':
+            console.log('The user is on anther video');
+            document.getElementById('room-header').innerText = 'The user is on anther video';
+            break;
 
         case 'existingParticipants':
             onExistingParticipants(parsedMessage);
