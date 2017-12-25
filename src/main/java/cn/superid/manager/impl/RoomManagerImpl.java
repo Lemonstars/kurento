@@ -2,7 +2,9 @@ package cn.superid.manager.impl;
 
 import cn.superid.entity.Room;
 import cn.superid.manager.RoomManagerInterface;
+import org.kurento.client.Composite;
 import org.kurento.client.KurentoClient;
+import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +32,11 @@ public class RoomManagerImpl implements RoomManagerInterface{
 
         if (room == null) {
             log.debug("Room {} not existent. Will create now!", roomId);
-            room = new Room(roomId, kurento.createMediaPipeline());
+
+            MediaPipeline pipeline = kurento.createMediaPipeline();
+            Composite composite = new Composite.Builder(pipeline).build();
+
+            room = new Room(roomId, pipeline, composite);
             rooms.put(roomId, room);
         }
         log.debug("Room {} found!", roomId);

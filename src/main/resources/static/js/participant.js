@@ -48,12 +48,13 @@ function Participant(name) {
 	}
 
 	this.offerToReceiveVideo = function(error, offerSdp, wp){
-		if (error) return console.error ("sdp offer error")
+		if (error) return console.error ("sdp offer error");
 		console.log('Invoking SDP offer callback function');
-		var msg =  { id : "receiveVideoFrom",
-				sender : name,
-				sdpOffer : offerSdp
-			};
+		var msg =  {
+			id : "receiveVideoFrom",
+			sender : name,
+			sdpOffer : offerSdp
+		};
 		sendMessage(msg);
 	};
 
@@ -61,12 +62,12 @@ function Participant(name) {
 	this.onIceCandidate = function (candidate, wp) {
 		console.log("Local candidate" + JSON.stringify(candidate));
 
-		  var message = {
+		var message = {
 		    id: 'onIceCandidate',
 		    candidate: candidate,
 		    name: name
-		  };
-		  sendMessage(message);
+		};
+		sendMessage(message);
 	};
 
 	Object.defineProperty(this, 'rtcPeer', { writable: true});

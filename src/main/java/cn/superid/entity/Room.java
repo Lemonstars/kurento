@@ -3,6 +3,7 @@ package cn.superid.entity;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.kurento.client.Composite;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
@@ -26,12 +27,14 @@ public class Room implements Closeable {
     private final Logger log = LoggerFactory.getLogger(Room.class);
 
     private String roomId;
+    private Composite composite;
     private MediaPipeline pipeline;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
-    public Room(String roomId, MediaPipeline pipeline) {
+    public Room(String roomId, MediaPipeline pipeline, Composite composite) {
         this.roomId = roomId;
         this.pipeline = pipeline;
+        this.composite = composite;
         log.info("ROOM {} has been created", roomId);
     }
 
