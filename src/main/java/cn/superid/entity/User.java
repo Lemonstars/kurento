@@ -19,8 +19,8 @@ import java.util.concurrent.ConcurrentMap;
 public class User implements Closeable {
     private String userId;
     private String roomId;
-    private WebSocketSession session;
     private MediaPipeline pipeline;
+    private final WebSocketSession session;
 
     private WebRtcEndpoint outgoingMedia;
     private ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
@@ -35,7 +35,6 @@ public class User implements Closeable {
         this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
 
         this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
                 JsonObject response = new JsonObject();
@@ -47,6 +46,7 @@ public class User implements Closeable {
                         session.sendMessage(new TextMessage(response.toString()));
                     }
                 } catch (IOException e) {
+
                 }
             }
         });
@@ -66,8 +66,8 @@ public class User implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for (final String remoteParticipantName : incomingMedia.keySet()) {
-            final WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantName);
+        for (String remoteParticipantId : incomingMedia.keySet()) {
+            WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantId);
             ep.release();
         }
         outgoingMedia.release();
@@ -79,11 +79,10 @@ public class User implements Closeable {
         }
     }
 
-    void cancelVideoFrom(final String senderName) {
-        final WebRtcEndpoint incoming = incomingMedia.remove(senderName);
+    void cancelVideoFrom(String senderId) {
+        WebRtcEndpoint incoming = incomingMedia.remove(senderId);
         incoming.release();
     }
-
 
     public void receiveVideoFrom(User sender, String sdpOffer) throws IOException{
         WebRtcEndpoint webRtcEndpoint = getEndpointForUser(sender);
@@ -104,7 +103,6 @@ public class User implements Closeable {
             return outgoingMedia;
         }
 
-
         WebRtcEndpoint incoming = incomingMedia.get(sender.getUserId());
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
@@ -121,7 +119,9 @@ public class User implements Closeable {
                             session.sendMessage(new TextMessage(response.toString()));
                         }
                     } catch (IOException e) {
+
                     }
+
                 }
             });
 
@@ -133,11 +133,11 @@ public class User implements Closeable {
         return incoming;
     }
 
-    public void addCandidate(IceCandidate candidate, String name) {
-        if (this.userId.compareTo(name) == 0) {
+    public void addCandidate(IceCandidate candidate, String id) {
+        if (this.userId.compareTo(id) == 0) {
             outgoingMedia.addIceCandidate(candidate);
         } else {
-            WebRtcEndpoint webRtc = incomingMedia.get(name);
+            WebRtcEndpoint webRtc = incomingMedia.get(id);
             if (webRtc != null) {
                 webRtc.addIceCandidate(candidate);
             }
@@ -166,7 +166,6 @@ public class User implements Closeable {
         result = 31 * result + roomId.hashCode();
         return result;
     }
-
 
     /**
      * 通知用户已加入其它的视频会议
