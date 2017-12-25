@@ -2,7 +2,6 @@ package cn.superid.entity;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
@@ -29,7 +28,6 @@ public class Room implements Closeable {
     private String roomId;
     private MediaPipeline pipeline;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
-
 
     public Room(String roomId, MediaPipeline pipeline) {
         this.roomId = roomId;
@@ -71,19 +69,16 @@ public class Room implements Closeable {
         }
     }
 
-    private void removeParticipant(String name) throws IOException {
-        participants.remove(name);
+    private void removeParticipant(String userId) throws IOException {
+        participants.remove(userId);
 
-        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.roomId, name);
+        log.debug("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
 
         List<String> unnotifiedParticipants = new ArrayList<>();
-        JsonObject participantLeftJson = new JsonObject();
-        participantLeftJson.addProperty("id", "participantLeft");
-        participantLeftJson.addProperty("name", name);
         for (User participant : participants.values()) {
             try {
-                participant.cancelVideoFrom(name);
-                participant.sendMessage(participantLeftJson);
+                participant.cancelVideoFrom(userId);
+                participant.notifyUserLeft(userId);
             } catch (IOException e) {
                 unnotifiedParticipants.add(participant.getUserId());
             }
@@ -91,7 +86,7 @@ public class Room implements Closeable {
 
         if (!unnotifiedParticipants.isEmpty()) {
             log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.roomId,
-                    unnotifiedParticipants, name);
+                    unnotifiedParticipants, userId);
         }
 
     }

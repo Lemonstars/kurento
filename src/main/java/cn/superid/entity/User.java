@@ -64,12 +64,6 @@ public class User implements Closeable {
         return session;
     }
 
-
-    public WebRtcEndpoint getOutgoingWebRtcPeer() {
-        return outgoingMedia;
-    }
-
-
     @Override
     public void close() throws IOException {
         for (final String remoteParticipantName : incomingMedia.keySet()) {
@@ -79,13 +73,13 @@ public class User implements Closeable {
         outgoingMedia.release();
     }
 
-    public void sendMessage(JsonObject message) throws IOException {
+    private void sendMessage(JsonObject message) throws IOException {
         synchronized (session) {
             session.sendMessage(new TextMessage(message.toString()));
         }
     }
 
-    public void cancelVideoFrom(final String senderName) {
+    void cancelVideoFrom(final String senderName) {
         final WebRtcEndpoint incoming = incomingMedia.remove(senderName);
         incoming.release();
     }
@@ -134,7 +128,7 @@ public class User implements Closeable {
             incomingMedia.put(sender.getUserId(), incoming);
         }
 
-        sender.getOutgoingWebRtcPeer().connect(incoming);
+        sender.outgoingMedia.connect(incoming);
 
         return incoming;
     }
@@ -221,6 +215,19 @@ public class User implements Closeable {
         existingParticipantsMsg.addProperty("id", "existingParticipants");
         existingParticipantsMsg.add("data", existingUsers);
         sendMessage(existingParticipantsMsg);
+    }
+
+    /**
+     * 其他用户离开时，通知房间内成员离开成员的用户标识
+     * @param userId
+     * @throws IOException
+     */
+    void notifyUserLeft(String userId) throws IOException{
+        JsonObject participantLeftJson = new JsonObject();
+        participantLeftJson.addProperty("id", "participantLeft");
+        participantLeftJson.addProperty("name", userId);
+
+        sendMessage(participantLeftJson);
     }
 
 }
