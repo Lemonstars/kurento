@@ -43,9 +43,9 @@ public class Room implements Closeable {
         this.close();
     }
 
-    public User join(String userName, WebSocketSession session) throws IOException {
-        log.info("ROOM {}: adding participant {}", userName, userName);
-        User participant = new User(userName, this.roomId, session, this.pipeline);
+    public User join(String userName, boolean isPresenter, WebSocketSession session) throws IOException {
+        log.info("ROOM {}: adding participant {}", roomId, userName);
+        User participant = new User(userName, this.roomId, isPresenter, session, this.pipeline);
         joinRoom(participant);
         participants.put(participant.getUserId(), participant);
         sendParticipantNames(participant);
@@ -59,8 +59,7 @@ public class Room implements Closeable {
     }
 
     private void joinRoom(User newParticipant) throws IOException {
-        log.info("ROOM {}: notifying other participants of new participant {}", roomId,
-                newParticipant.getUserId());
+        log.info("ROOM {}: notifying other participants of new participant {}", roomId, newParticipant.getUserId());
 
         String userId = newParticipant.getUserId();
         for (User participant : participants.values()) {
@@ -75,7 +74,7 @@ public class Room implements Closeable {
     private void removeParticipant(String userId) throws IOException {
         participants.remove(userId);
 
-       log.info("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
+        log.info("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
 
         List<String> unnotifiedParticipants = new ArrayList<>();
         for (User participant : participants.values()) {
@@ -88,8 +87,7 @@ public class Room implements Closeable {
         }
 
         if (!unnotifiedParticipants.isEmpty()) {
-           log.info("ROOM {}: The users {} could not be notified that {} left the room", this.roomId,
-                    unnotifiedParticipants, userId);
+           log.info("ROOM {}: The users {} could not be notified that {} left the room", this.roomId, unnotifiedParticipants, userId);
         }
 
     }
@@ -103,14 +101,13 @@ public class Room implements Closeable {
             }
         }
 
-       log.info("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
+        log.info("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
         user.notifyExistingUserId(participantsArray);
     }
 
     public boolean isRoomEmpty(){
         return participants.values().isEmpty();
     }
-
 
     public String getRoomId() {
         return roomId;
@@ -129,7 +126,6 @@ public class Room implements Closeable {
         participants.clear();
 
         pipeline.release(new Continuation<Void>() {
-
             @Override
             public void onSuccess(Void result) throws Exception {
                 log.trace("ROOM {}: Released Pipeline", Room.this.roomId);

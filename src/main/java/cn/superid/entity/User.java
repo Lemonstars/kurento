@@ -17,17 +17,20 @@ import java.util.concurrent.ConcurrentMap;
  * @date 2017-12-18
  */
 public class User implements Closeable {
+
     private String userId;
     private String roomId;
+    private boolean isPresenter;
     private MediaPipeline pipeline;
     private final WebSocketSession session;
 
     private WebRtcEndpoint outgoingMedia;
     private ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
 
-    public User(String userId, String roomId, WebSocketSession session, MediaPipeline pipeline) {
+    public User(String userId, String roomId, boolean isPresenter, WebSocketSession session, MediaPipeline pipeline) {
         this.userId = userId;
         this.roomId = roomId;
+        this.isPresenter = isPresenter;
         this.session = session;
         this.pipeline = pipeline;
 

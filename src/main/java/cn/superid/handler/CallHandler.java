@@ -88,7 +88,7 @@ public class CallHandler extends TextWebSocketHandler {
             log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
             Room room = roomManager.getRoom(roomId);
-            User user = room.join(userId, session);
+            User user = room.join(userId, true, session);
 
             user.notifyPresenterRoomId(roomId);
 
@@ -110,7 +110,7 @@ public class CallHandler extends TextWebSocketHandler {
             log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
             Room room = roomManager.getRoom(roomId);
-            User user = room.join(userId, session);
+            User user = room.join(userId, false, session);
             userManager.register(user);
         }else {
             log.info("User {} is on another video", userId);
