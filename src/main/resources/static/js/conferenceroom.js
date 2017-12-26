@@ -159,8 +159,7 @@ function sendMessage(message) {
 function addIceCandidate(parsedMessage) {
     participants[parsedMessage.name].rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
         if (error) {
-            console.error("Error adding candidate: " + error);
-            return;
+            return console.error("Error adding candidate: " + error);
         }
     });
 }
@@ -170,16 +169,3 @@ function receiveVideoResponse(result) {
         if (error) return console.error (error);
     });
 }
-
-
-
-// function callResponse(message) {
-// 	if (message.response != 'accepted') {
-// 		console.info('Call not accepted by peer. Closing call');
-// 		stop();
-// 	} else {
-// 		webRtcPeer.processAnswer(message.sdpAnswer, function (error) {
-// 			if (error) return console.error (error);
-// 		});
-// 	}
-// }

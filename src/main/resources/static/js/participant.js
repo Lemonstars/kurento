@@ -16,14 +16,9 @@ function Participant(name) {
 	video.autoplay = true;
 	video.controls = false;
 
-
-	this.getElement = function() {
-		return container;
-	}
-
 	this.getVideoElement = function() {
 		return video;
-	}
+	};
 
 	this.offerToReceiveVideo = function(error, offerSdp, wp){
 		if (error) return console.error ("sdp offer error");
