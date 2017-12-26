@@ -34,11 +34,11 @@ function Participant(name) {
 		if (container.className === PARTICIPANT_CLASS) {
 			var elements = Array.prototype.slice.call(document.getElementsByClassName(PARTICIPANT_MAIN_CLASS));
 			elements.forEach(function(item) {
-					item.className = PARTICIPANT_CLASS;
-				});
+				item.className = PARTICIPANT_CLASS;
+			});
 
-				container.className = PARTICIPANT_MAIN_CLASS;
-			} else {
+			container.className = PARTICIPANT_MAIN_CLASS;
+		} else {
 			container.className = PARTICIPANT_CLASS;
 		}
 	}

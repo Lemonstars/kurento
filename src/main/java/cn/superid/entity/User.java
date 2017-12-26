@@ -45,7 +45,7 @@ public class User implements Closeable {
                         session.sendMessage(new TextMessage(response.toString()));
                     }
                 } catch (IOException e) {
-
+                    e.printStackTrace();
                 }
             }
         });
@@ -93,7 +93,7 @@ public class User implements Closeable {
         scParams.addProperty("sdpAnswer", ipSdpAnswer);
 
         sendMessage(scParams);
-        getEndpointForUser(sender).gatherCandidates();
+        webRtcEndpoint.gatherCandidates();
     }
 
 
@@ -102,7 +102,8 @@ public class User implements Closeable {
             return outgoingMedia;
         }
 
-        WebRtcEndpoint incoming = incomingMedia.get(sender.getUserId());
+        String senderId = sender.getUserId();
+        WebRtcEndpoint incoming = incomingMedia.get(senderId);
         if (incoming == null) {
             incoming = new WebRtcEndpoint.Builder(pipeline).build();
 
@@ -111,20 +112,20 @@ public class User implements Closeable {
                 public void onEvent(IceCandidateFoundEvent event) {
                     JsonObject response = new JsonObject();
                     response.addProperty("id", "iceCandidate");
-                    response.addProperty("name", sender.getUserId());
+                    response.addProperty("name", senderId);
                     response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
                     try {
                         synchronized (session) {
                             session.sendMessage(new TextMessage(response.toString()));
                         }
                     } catch (IOException e) {
-
+                        e.printStackTrace();
                     }
 
                 }
             });
 
-            incomingMedia.put(sender.getUserId(), incoming);
+            incomingMedia.put(senderId, incoming);
         }
 
         sender.outgoingMedia.connect(incoming);
