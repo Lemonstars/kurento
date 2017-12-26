@@ -1,6 +1,5 @@
 package cn.superid.entity;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
@@ -9,8 +8,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author 刘兴
@@ -21,45 +18,42 @@ public class User implements Closeable {
     private String userId;
     private String roomId;
     private boolean isPresenter;
-    private MediaPipeline pipeline;
+    private MediaPipeline mediaPipeline;
+    private WebRtcEndpoint webRtcEndpoint;
     private final WebSocketSession session;
 
-    private WebRtcEndpoint outgoingMedia;
-    private ConcurrentMap<String, WebRtcEndpoint> incomingMedia = new ConcurrentHashMap<>();
-
-    public User(String userId, String roomId, boolean isPresenter, WebSocketSession session, MediaPipeline pipeline) {
+    public User(String userId, String roomId, boolean isPresenter, MediaPipeline mediaPipeline, WebSocketSession session) {
         this.userId = userId;
         this.roomId = roomId;
         this.isPresenter = isPresenter;
+        this.mediaPipeline = mediaPipeline;
         this.session = session;
-        this.pipeline = pipeline;
 
-        this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
+        this.webRtcEndpoint = new WebRtcEndpoint.Builder(mediaPipeline).build();
+//        this.webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+//            @Override
+//            public void onEvent(IceCandidateFoundEvent event) {
+//                JsonObject response = new JsonObject();
+//                response.addProperty("id", "iceCandidate");
+//                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+//                try {
+//                    synchronized (session) {
+//                        session.sendMessage(new TextMessage(response.toString()));
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//        webRtcEndpoint.gatherCandidates();
+    }
 
-        this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.addProperty("name", userId);
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+    public WebRtcEndpoint getWebRtcEndpoint() {
+        return webRtcEndpoint;
     }
 
     public String getUserId() {
         return userId;
-    }
-
-    public String getRoomId() {
-        return this.roomId;
     }
 
     public WebSocketSession getSession() {
@@ -68,11 +62,7 @@ public class User implements Closeable {
 
     @Override
     public void close() throws IOException {
-        for (String remoteParticipantId : incomingMedia.keySet()) {
-            WebRtcEndpoint ep = this.incomingMedia.get(remoteParticipantId);
-            ep.release();
-        }
-        outgoingMedia.release();
+
     }
 
     private void sendMessage(JsonObject message) throws IOException {
@@ -81,70 +71,8 @@ public class User implements Closeable {
         }
     }
 
-    void cancelVideoFrom(String senderId) {
-        WebRtcEndpoint incoming = incomingMedia.remove(senderId);
-        incoming.release();
-    }
-
-    public void receiveVideoFrom(User sender, String sdpOffer) throws IOException{
-        WebRtcEndpoint webRtcEndpoint = getEndpointForUser(sender);
-        String ipSdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-
-        JsonObject scParams = new JsonObject();
-        scParams.addProperty("id", "receiveVideoAnswer");
-        scParams.addProperty("name", sender.getUserId());
-        scParams.addProperty("sdpAnswer", ipSdpAnswer);
-
-        sendMessage(scParams);
-        webRtcEndpoint.gatherCandidates();
-    }
-
-
-    private WebRtcEndpoint getEndpointForUser(User sender) {
-        if (sender.getUserId().equals(userId)) {
-            return outgoingMedia;
-        }
-
-        String senderId = sender.getUserId();
-        WebRtcEndpoint incoming = incomingMedia.get(senderId);
-        if (incoming == null) {
-            incoming = new WebRtcEndpoint.Builder(pipeline).build();
-
-            incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-                @Override
-                public void onEvent(IceCandidateFoundEvent event) {
-                    JsonObject response = new JsonObject();
-                    response.addProperty("id", "iceCandidate");
-                    response.addProperty("name", senderId);
-                    response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                    try {
-                        synchronized (session) {
-                            session.sendMessage(new TextMessage(response.toString()));
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            });
-
-            incomingMedia.put(senderId, incoming);
-        }
-
-        sender.outgoingMedia.connect(incoming);
-
-        return incoming;
-    }
-
-    public void addCandidate(IceCandidate candidate, String id) {
-        if (this.userId.compareTo(id) == 0) {
-            outgoingMedia.addIceCandidate(candidate);
-        } else {
-            WebRtcEndpoint webRtc = incomingMedia.get(id);
-            if (webRtc != null) {
-                webRtc.addIceCandidate(candidate);
-            }
-        }
+    public void addCandidate(IceCandidate candidate) {
+        webRtcEndpoint.addIceCandidate(candidate);
     }
 
     @Override
@@ -192,44 +120,6 @@ public class User implements Closeable {
         jsonObject.addProperty("roomId", roomId);
 
         sendMessage(jsonObject);
-    }
-
-    /**
-     * 通知有新用户加入，告知用户标识
-     * @param userId
-     * @throws IOException
-     */
-    void notifyNewUserId(String userId) throws IOException{
-        JsonObject newParticipantMsg = new JsonObject();
-        newParticipantMsg.addProperty("id", "newParticipantArrived");
-        newParticipantMsg.addProperty("name", userId);
-
-        sendMessage(newParticipantMsg);
-    }
-
-    /**
-     * 在刚加入房间时，通知在房间内其他用户的标识
-     * @param existingUsers
-     * @throws IOException
-     */
-    void notifyExistingUserId(JsonArray existingUsers) throws IOException{
-        JsonObject existingParticipantsMsg = new JsonObject();
-        existingParticipantsMsg.addProperty("id", "existingParticipants");
-        existingParticipantsMsg.add("data", existingUsers);
-        sendMessage(existingParticipantsMsg);
-    }
-
-    /**
-     * 其他用户离开时，通知房间内成员离开成员的用户标识
-     * @param userId
-     * @throws IOException
-     */
-    void notifyUserLeft(String userId) throws IOException{
-        JsonObject participantLeftJson = new JsonObject();
-        participantLeftJson.addProperty("id", "participantLeft");
-        participantLeftJson.addProperty("name", userId);
-
-        sendMessage(participantLeftJson);
     }
 
 }

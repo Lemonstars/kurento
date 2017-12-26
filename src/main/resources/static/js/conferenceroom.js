@@ -1,6 +1,11 @@
 var ws = new WebSocket('wss://' + location.host + '/groupCall');
-var participants = {};
+var mixVideo;
 var userId;
+var webRtcPeer;
+
+window.onload = function() {
+	mixVideo = document.getElementById('mixVideo');
+};
 
 window.onbeforeunload = function() {
 	ws.close();
@@ -13,26 +18,19 @@ ws.onmessage = function(message) {
 	switch (parsedMessage.id) {
         case 'roomId':
             document.getElementById('room-header').innerText = 'ROOM ' + parsedMessage.roomId;
+            uploadVideoAndAudio();
             break;
         case 'userState':
             console.log('The user is on anther video');
             document.getElementById('room-header').innerText = 'The user is on anther video';
             break;
-
-        case 'newParticipantArrived':
-            onNewParticipant(parsedMessage);
-            break;
-        case 'existingParticipants':
-            onExistingParticipants(parsedMessage);
-            break;
-        case 'participantLeft':
-            onParticipantLeft(parsedMessage);
-            break;
-        case 'receiveVideoAnswer':
-            receiveVideoResponse(parsedMessage);
-            break;
         case 'iceCandidate':
-            addIceCandidate(parsedMessage);
+            webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
+                if (error) return console.error('Error adding candidate: ' + error);
+            });
+            break;
+        case 'startResponse':
+            startResponse(parsedMessage);
             break;
         default:
             console.error('Unrecognized message', parsedMessage);
@@ -72,82 +70,45 @@ function joinRoom() {
     sendMessage(message);
 }
 
-function onNewParticipant(request) {
-	receiveVideo(request.name);
-}
-
-function onExistingParticipants(msg) {
-	var constraints = {
-		audio : true,
-		video : {
-			mandatory : {
-				maxWidth : 320,
-				maxFrameRate : 15,
-				minFrameRate : 15
-			}
-		}
-	};
-
-	console.log(userId + " registered in room " + userId);
-	var participant = new Participant(userId);
-	participants[userId] = participant;
-	var video = participant.getVideoElement();
-
-	var options = {
-	      localVideo: video,
-	      mediaConstraints: constraints,
-	      onicecandidate: participant.onIceCandidate.bind(participant)
+function uploadVideoAndAudio() {
+    var options = {
+        remoteVideo : mixVideo,
+        onicecandidate : onIceCandidate
     };
 
-	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options, function (error) {
-	    if(error) {
-	        return console.error(error);
-	    }
-	    this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-	});
-
-	msg.data.forEach(receiveVideo);
-}
-
-function receiveVideo(sender) {
-	var participant = new Participant(sender);
-	participants[sender] = participant;
-	var video = participant.getVideoElement();
-
-	var options = {
-      remoteVideo: video,
-      onicecandidate: participant.onIceCandidate.bind(participant)
-    };
-
-	participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, function (error) {
-	    if(error) {
-	        return console.error(error);
-	    }
-	    this.generateOffer (participant.offerToReceiveVideo.bind(participant));
+    webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
+    	if (error) return console.error(error);
+    	webRtcPeer.generateOffer(onOffer);
 	});
 }
 
-function onParticipantLeft(request) {
-	console.log('Participant ' + request.name + ' left');
-	var participant = participants[request.name];
-	participant.dispose();
-	delete participants[request.name];
+function onIceCandidate(candidate) {
+    console.log('Local candidate' + JSON.stringify(candidate));
+
+    var message = {
+        id : 'onIceCandidate',
+        candidate : candidate
+    };
+    sendMessage(message);
 }
 
-function leaveRoom() {
-    sendMessage({
-        id : 'leaveRoom'
+function onOffer(error, offerSdp) {
+    if (error) return console.error('Error generating the offer');
+    console.info('Invoking SDP offer callback function ' + location.host);
+    var message = {
+        id : 'startVideo',
+		userId: userId,
+        sdpOffer : offerSdp
+    };
+    sendMessage(message);
+}
+
+function startResponse(message) {
+    console.log('SDP answer received from server. Processing ...');
+
+    webRtcPeer.processAnswer(message.sdpAnswer, function(error) {
+        if (error) return console.error(error);
     });
-
-    for (var key in participants) {
-        participants[key].dispose();
-    }
-
-    document.getElementById('create').style.display = 'block';
-    document.getElementById('join').style.display = 'block';
-    document.getElementById('room').style.display = 'none';
-
-    ws.close();
 }
 
 function sendMessage(message) {
@@ -156,16 +117,6 @@ function sendMessage(message) {
 	ws.send(jsonMessage);
 }
 
-function addIceCandidate(parsedMessage) {
-    participants[parsedMessage.name].rtcPeer.addIceCandidate(parsedMessage.candidate, function (error) {
-        if (error) {
-            return console.error("Error adding candidate: " + error);
-        }
-    });
-}
 
-function receiveVideoResponse(result) {
-    participants[result.name].rtcPeer.processAnswer (result.sdpAnswer, function (error) {
-        if (error) return console.error (error);
-    });
-}
+
+

@@ -8,7 +8,8 @@ import cn.superid.util.UUIDGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.kurento.client.IceCandidate;
+import org.kurento.client.*;
+import org.kurento.jsonrpc.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,14 +39,6 @@ public class CallHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        User user = userManager.getBySessionId(session.getId());
-
-        if (user != null) {
-           log.debug("Incoming message from user '{}': {}", user.getUserId(), jsonMessage);
-        } else {
-           log.debug("Incoming message from new user: {}", jsonMessage);
-        }
-
         switch (jsonMessage.get("id").getAsString()) {
             case "createRoom":
                 createRoom(jsonMessage, session);
@@ -53,26 +46,21 @@ public class CallHandler extends TextWebSocketHandler {
             case "joinRoom":
                 joinRoom(jsonMessage, session);
                 break;
-            case "receiveVideoFrom":
-                String senderId = jsonMessage.get("sender").getAsString();
-                User sender = userManager.getByUserId(senderId);
-                String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
-                if(user != null){
-                    user.receiveVideoFrom(sender, sdpOffer);
-                }
+            case "startVideo":
+                startVideo(jsonMessage, session);
                 break;
-            case "leaveRoom":
-                leaveRoom(user);
-                break;
-            case "onIceCandidate":
-                JsonObject candidate = jsonMessage.get("candidate").getAsJsonObject();
+            case "onIceCandidate": {
+                JsonObject jsonCandidate = jsonMessage.get("candidate").getAsJsonObject();
 
+                User user = userManager.getBySessionId(session.getId());
                 if (user != null) {
-                    IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
-                            candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
-                    user.addCandidate(cand, jsonMessage.get("name").getAsString());
+                    IceCandidate candidate = new IceCandidate(jsonCandidate.get("candidate").getAsString(),
+                            jsonCandidate.get("sdpMid").getAsString(),
+                            jsonCandidate.get("sdpMLineIndex").getAsInt());
+                    user.addCandidate(candidate);
                 }
                 break;
+            }
             default:
                 break;
         }
@@ -88,17 +76,56 @@ public class CallHandler extends TextWebSocketHandler {
             log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
             Room room = roomManager.getRoom(roomId);
-            User user = room.join(userId, true, session);
+            User presenter = new User(userId, roomId, true, room.getPipeline(), session);
+            userManager.register(presenter);
+            presenter.notifyPresenterRoomId(roomId);
 
-            user.notifyPresenterRoomId(roomId);
-
-            userManager.register(user);
         }else {
             log.info("User {} is on another video", userId);
 
             User user = userManager.getByUserId(userId);
             user.notifyUserBusy();
         }
+
+    }
+
+    private void  startVideo(JsonObject params, WebSocketSession session){
+        String userId = params.get("userId").getAsString();
+        User user = userManager.getByUserId(userId);
+        WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
+        webRtcEndpoint.connect(webRtcEndpoint);
+
+        String sdpOffer = params.get("sdpOffer").getAsString();
+        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
+
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "startResponse");
+        response.addProperty("sdpAnswer", sdpAnswer);
+
+        try {
+            synchronized (session) {
+                session.sendMessage(new TextMessage(response.toString()));
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+        webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+            @Override
+            public void onEvent(IceCandidateFoundEvent event) {
+                JsonObject response = new JsonObject();
+                response.addProperty("id", "iceCandidate");
+                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+                try {
+                    synchronized (session) {
+                        session.sendMessage(new TextMessage(response.toString()));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        webRtcEndpoint.gatherCandidates();
 
     }
 
@@ -110,8 +137,8 @@ public class CallHandler extends TextWebSocketHandler {
             log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
 
             Room room = roomManager.getRoom(roomId);
-            User user = room.join(userId, false, session);
-            userManager.register(user);
+            User viewer = new User(userId, roomId, false, room.getPipeline(), session);
+            userManager.register(viewer);
         }else {
             log.info("User {} is on another video", userId);
 
@@ -119,15 +146,6 @@ public class CallHandler extends TextWebSocketHandler {
             user.notifyUserBusy();
         }
 
-    }
-
-    private void leaveRoom(User user) throws IOException {
-        userManager.removeByUserId(user.getUserId());
-        Room room = roomManager.getRoom(user.getRoomId());
-        room.leave(user);
-        if (room.isRoomEmpty()) {
-            roomManager.removeRoom(room);
-        }
     }
 
 }

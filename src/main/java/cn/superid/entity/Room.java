@@ -1,20 +1,13 @@
 package cn.superid.entity;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import org.kurento.client.Composite;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -43,86 +36,22 @@ public class Room implements Closeable {
         this.close();
     }
 
-    public User join(String userName, boolean isPresenter, WebSocketSession session) throws IOException {
-        log.info("ROOM {}: adding participant {}", roomId, userName);
-        User participant = new User(userName, this.roomId, isPresenter, session, this.pipeline);
-        joinRoom(participant);
-        participants.put(participant.getUserId(), participant);
-        sendParticipantNames(participant);
-        return participant;
-    }
-
-    public void leave(User user) throws IOException {
-        log.info("PARTICIPANT {}: Leaving room {}", user.getUserId(), this.roomId);
-        this.removeParticipant(user.getUserId());
-        user.close();
-    }
-
-    private void joinRoom(User newParticipant) throws IOException {
-        log.info("ROOM {}: notifying other participants of new participant {}", roomId, newParticipant.getUserId());
-
-        String userId = newParticipant.getUserId();
-        for (User participant : participants.values()) {
-            try {
-                participant.notifyNewUserId(userId);
-            } catch (IOException e) {
-               log.info("ROOM {}: participant {} could not be notified", roomId, participant.getUserId(), e);
-            }
-        }
-    }
-
-    private void removeParticipant(String userId) throws IOException {
-        participants.remove(userId);
-
-        log.info("ROOM {}: notifying all users that {} is leaving the room", this.roomId, userId);
-
-        List<String> unnotifiedParticipants = new ArrayList<>();
-        for (User participant : participants.values()) {
-            try {
-                participant.cancelVideoFrom(userId);
-                participant.notifyUserLeft(userId);
-            } catch (IOException e) {
-                unnotifiedParticipants.add(participant.getUserId());
-            }
-        }
-
-        if (!unnotifiedParticipants.isEmpty()) {
-           log.info("ROOM {}: The users {} could not be notified that {} left the room", this.roomId, unnotifiedParticipants, userId);
-        }
-
-    }
-
-    private void sendParticipantNames(User user) throws IOException {
-        JsonArray participantsArray = new JsonArray();
-        for (User participant : participants.values()) {
-            if (!participant.equals(user)) {
-                JsonElement participantName = new JsonPrimitive(participant.getUserId());
-                participantsArray.add(participantName);
-            }
-        }
-
-        log.info("PARTICIPANT {}: sending a list of {} participants", user.getUserId(), participantsArray.size());
-        user.notifyExistingUserId(participantsArray);
-    }
-
-    public boolean isRoomEmpty(){
-        return participants.values().isEmpty();
-    }
 
     public String getRoomId() {
         return roomId;
     }
 
+
+    public void joinRoom(User user){
+
+    }
+
+    public MediaPipeline getPipeline() {
+        return pipeline;
+    }
+
     @Override
     public void close() {
-        for (User user : participants.values()) {
-            try {
-                user.close();
-            } catch (IOException e) {
-               log.info("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getUserId(), e);
-            }
-        }
-
         participants.clear();
 
         pipeline.release(new Continuation<Void>() {
