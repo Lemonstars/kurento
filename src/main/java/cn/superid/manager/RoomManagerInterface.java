@@ -19,6 +19,13 @@ public interface RoomManagerInterface {
     Room getRoom(String roomName);
 
     /**
+     * 通过房间标识判断房间是否存在
+     * @param roomId
+     * @return true 房间存在
+     */
+    boolean isRoomExist(String roomId);
+
+    /**
      * 移除房间记录
      * @param room
      */

@@ -8,8 +8,7 @@ import cn.superid.util.UUIDGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.kurento.client.*;
-import org.kurento.jsonrpc.JsonUtils;
+import org.kurento.client.IceCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,29 +42,31 @@ public class CallHandler extends TextWebSocketHandler {
             case "createRoom":
                 createRoom(jsonMessage, session);
                 break;
-            case "joinRoom":
-                joinRoom(jsonMessage, session);
-                break;
             case "startVideo":
                 startVideo(jsonMessage, session);
                 break;
-            case "onIceCandidate": {
-                JsonObject jsonCandidate = jsonMessage.get("candidate").getAsJsonObject();
-
-                User user = userManager.getBySessionId(session.getId());
-                if (user != null) {
-                    IceCandidate candidate = new IceCandidate(jsonCandidate.get("candidate").getAsString(),
-                            jsonCandidate.get("sdpMid").getAsString(),
-                            jsonCandidate.get("sdpMLineIndex").getAsInt());
-                    user.addCandidate(candidate);
-                }
+            case "joinVideo":
+                joinVideo(jsonMessage, session);
                 break;
-            }
+            case "onIceCandidate":
+                onIceCandidate(jsonMessage, session);
+                break;
             default:
                 break;
         }
     }
 
+    private void onIceCandidate(JsonObject params, WebSocketSession session){
+        JsonObject jsonCandidate = params.get("candidate").getAsJsonObject();
+
+        User user = userManager.getBySessionId(session.getId());
+        if (user != null) {
+            IceCandidate candidate = new IceCandidate(jsonCandidate.get("candidate").getAsString(),
+                    jsonCandidate.get("sdpMid").getAsString(),
+                    jsonCandidate.get("sdpMLineIndex").getAsInt());
+            user.addCandidate(candidate);
+        }
+    }
 
     private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
         String userId = params.get("userId").getAsString();
@@ -89,63 +90,44 @@ public class CallHandler extends TextWebSocketHandler {
 
     }
 
-    private void  startVideo(JsonObject params, WebSocketSession session){
+    private void startVideo(JsonObject params, WebSocketSession session) throws IOException{
         String userId = params.get("userId").getAsString();
-        User user = userManager.getByUserId(userId);
-        WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
-        webRtcEndpoint.connect(webRtcEndpoint);
+        User presenter = userManager.getByUserId(userId);
+        String roomId = presenter.getRoomId();
+        Room room = roomManager.getRoom(roomId);
 
         String sdpOffer = params.get("sdpOffer").getAsString();
-        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "startResponse");
-        response.addProperty("sdpAnswer", sdpAnswer);
-
-        try {
-            synchronized (session) {
-                session.sendMessage(new TextMessage(response.toString()));
-            }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-
-        webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        webRtcEndpoint.gatherCandidates();
-
+        room.joinRoom(presenter, sdpOffer, session);
     }
 
-    private void joinRoom(JsonObject params, WebSocketSession session) throws IOException{
+    private void joinVideo(JsonObject params, WebSocketSession session) throws IOException{
         String userId = params.get("userId").getAsString();
+        String roomId = params.get("roomId").getAsString();
 
-        if(userManager.isUserFree(userId)){
-            String roomId = params.get("roomId").getAsString();
-            log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
+        if(!roomManager.isRoomExist(roomId)){
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("id", "roomState");
+            jsonObject.addProperty("state", "room not exist");
 
-            Room room = roomManager.getRoom(roomId);
-            User viewer = new User(userId, roomId, false, room.getPipeline(), session);
-            userManager.register(viewer);
-        }else {
-            log.info("User {} is on another video", userId);
-
-            User user = userManager.getByUserId(userId);
-            user.notifyUserBusy();
+            session.sendMessage(new TextMessage(jsonObject.toString()));
+            return;
         }
 
-    }
+        if(!userManager.isUserFree(userId)){
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("id", "userState");
+            jsonObject.addProperty("state", "user is an anther video");
 
+            session.sendMessage(new TextMessage(jsonObject.toString()));
+            return;
+        }
+
+        Room room = roomManager.getRoom(roomId);
+        User viewer = new User(userId, roomId, true, room.getPipeline(), session);
+        userManager.register(viewer);
+
+        String sdpOffer = params.get("sdpOffer").getAsString();
+        room.joinRoom(viewer, sdpOffer, session);
+    }
 }

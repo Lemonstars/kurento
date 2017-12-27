@@ -1,13 +1,16 @@
 package cn.superid.entity;
 
-import org.kurento.client.Composite;
-import org.kurento.client.Continuation;
-import org.kurento.client.MediaPipeline;
+import com.google.gson.JsonObject;
+import org.kurento.client.*;
+import org.kurento.jsonrpc.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -22,12 +25,15 @@ public class Room implements Closeable {
     private String roomId;
     private Composite composite;
     private MediaPipeline pipeline;
+    private HubPort outHubPort;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
-    public Room(String roomId, MediaPipeline pipeline, Composite composite) {
+    public Room(String roomId, MediaPipeline pipeline) {
         this.roomId = roomId;
         this.pipeline = pipeline;
-        this.composite = composite;
+        this.composite = new Composite.Builder(pipeline).build();
+        this.outHubPort = new HubPort.Builder(composite).build();
+
         log.info("ROOM {} has been created", roomId);
     }
 
@@ -36,14 +42,46 @@ public class Room implements Closeable {
         this.close();
     }
 
-
     public String getRoomId() {
         return roomId;
     }
 
+    public void joinRoom(User user, String sdpOffer, WebSocketSession session){
+        WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
 
-    public void joinRoom(User user){
+        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "startResponse");
+        response.addProperty("sdpAnswer", sdpAnswer);
 
+        try {
+            synchronized (session) {
+                session.sendMessage(new TextMessage(response.toString()));
+            }
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
+        webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+            @Override
+            public void onEvent(IceCandidateFoundEvent event) {
+                JsonObject response = new JsonObject();
+                response.addProperty("id", "iceCandidate");
+                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+                try {
+                    synchronized (session) {
+                        session.sendMessage(new TextMessage(response.toString()));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        webRtcEndpoint.gatherCandidates();
+
+        HubPort hubPort = new HubPort.Builder(composite).build();
+        webRtcEndpoint.connect(hubPort);
+        outHubPort.connect(webRtcEndpoint);
     }
 
     public MediaPipeline getPipeline() {

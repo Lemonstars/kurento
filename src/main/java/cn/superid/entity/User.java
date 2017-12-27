@@ -1,8 +1,9 @@
 package cn.superid.entity;
 
 import com.google.gson.JsonObject;
-import org.kurento.client.*;
-import org.kurento.jsonrpc.JsonUtils;
+import org.kurento.client.IceCandidate;
+import org.kurento.client.MediaPipeline;
+import org.kurento.client.WebRtcEndpoint;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -30,22 +31,6 @@ public class User implements Closeable {
         this.session = session;
 
         this.webRtcEndpoint = new WebRtcEndpoint.Builder(mediaPipeline).build();
-//        this.webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-//            @Override
-//            public void onEvent(IceCandidateFoundEvent event) {
-//                JsonObject response = new JsonObject();
-//                response.addProperty("id", "iceCandidate");
-//                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-//                try {
-//                    synchronized (session) {
-//                        session.sendMessage(new TextMessage(response.toString()));
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//        webRtcEndpoint.gatherCandidates();
     }
 
     public WebRtcEndpoint getWebRtcEndpoint() {
@@ -58,6 +43,10 @@ public class User implements Closeable {
 
     public WebSocketSession getSession() {
         return session;
+    }
+
+    public String getRoomId() {
+        return roomId;
     }
 
     @Override

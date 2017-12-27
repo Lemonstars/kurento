@@ -1,7 +1,8 @@
 var ws = new WebSocket('wss://' + location.host + '/groupCall');
 var mixVideo;
-var userId;
 var webRtcPeer;
+var userId;
+var roomId;
 
 window.onload = function() {
 	mixVideo = document.getElementById('mixVideo');
@@ -54,20 +55,23 @@ function createRoom() {
 
 function joinRoom() {
     userId = document.getElementById('user-join').value;
-    var roomId = document.getElementById('room-join').value;
+    roomId = document.getElementById('room-join').value;
 
     document.getElementById('room-header').innerText = 'ROOM ' + roomId;
     document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
-    var message = {
-        id : 'joinRoom',
-        userId: userId,
-        roomId: roomId
+    var options = {
+        remoteVideo : mixVideo,
+        onicecandidate : onIceCandidate
     };
 
-    sendMessage(message);
+    webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
+        if (error) return console.error(error);
+        webRtcPeer.generateOffer(onOfferJoin);
+    });
+
 }
 
 function uploadVideoAndAudio() {
@@ -78,7 +82,7 @@ function uploadVideoAndAudio() {
 
     webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
     	if (error) return console.error(error);
-    	webRtcPeer.generateOffer(onOffer);
+    	webRtcPeer.generateOffer(onOfferStart);
 	});
 }
 
@@ -92,13 +96,25 @@ function onIceCandidate(candidate) {
     sendMessage(message);
 }
 
-function onOffer(error, offerSdp) {
+function onOfferStart(error, offerSdp) {
     if (error) return console.error('Error generating the offer');
     console.info('Invoking SDP offer callback function ' + location.host);
     var message = {
         id : 'startVideo',
 		userId: userId,
         sdpOffer : offerSdp
+    };
+    sendMessage(message);
+}
+
+function onOfferJoin(error, offerSdp) {
+    if (error) return console.error('Error generating the offer');
+    console.info('Invoking SDP offer callback function ' + location.host);
+    var message = {
+        id : 'joinVideo',
+        sdpOffer : offerSdp,
+        userId: userId,
+        roomId: roomId
     };
     sendMessage(message);
 }

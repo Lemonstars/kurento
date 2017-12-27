@@ -34,13 +34,17 @@ public class RoomManagerImpl implements RoomManagerInterface{
             log.info("Room {} not exist. Will create now!", roomId);
 
             MediaPipeline pipeline = kurento.createMediaPipeline();
-            Composite composite = new Composite.Builder(pipeline).build();
 
-            room = new Room(roomId, pipeline, composite);
+            room = new Room(roomId, pipeline);
             rooms.put(roomId, room);
         }
         log.info("Room {} found!", roomId);
         return room;
+    }
+
+    @Override
+    public boolean isRoomExist(String roomId) {
+        return rooms.containsKey(roomId);
     }
 
     @Override
