@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,9 +22,9 @@ public class Room implements Closeable {
     private final Logger log = LoggerFactory.getLogger(Room.class);
 
     private String roomId;
+    private HubPort outHubPort;
     private Composite composite;
     private MediaPipeline pipeline;
-    private HubPort outHubPort;
     private ConcurrentMap<String, User> participants = new ConcurrentHashMap<>();
 
     public Room(String roomId, MediaPipeline pipeline) {
@@ -35,15 +34,6 @@ public class Room implements Closeable {
         this.outHubPort = new HubPort.Builder(composite).build();
 
         log.info("ROOM {} has been created", roomId);
-    }
-
-    @PreDestroy
-    private void shutdown() {
-        this.close();
-    }
-
-    public String getRoomId() {
-        return roomId;
     }
 
     public void joinRoom(User user, String sdpOffer, WebSocketSession session){
@@ -86,10 +76,16 @@ public class Room implements Closeable {
             webRtcEndpoint.connect(hubPort, MediaType.AUDIO);
         }
         outHubPort.connect(webRtcEndpoint);
+
+        participants.put(user.getUserId(), user);
     }
 
     public MediaPipeline getPipeline() {
         return pipeline;
+    }
+
+    public boolean isRoomEmpty(){
+        return participants.isEmpty();
     }
 
     @Override
@@ -107,8 +103,6 @@ public class Room implements Closeable {
                 log.warn("PARTICIPANT {}: Could not release Pipeline", Room.this.roomId);
             }
         });
-
-       log.info("Room {} closed", this.roomId);
     }
 
 }

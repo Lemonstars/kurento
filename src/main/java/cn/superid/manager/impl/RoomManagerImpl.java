@@ -2,7 +2,6 @@ package cn.superid.manager.impl;
 
 import cn.superid.entity.Room;
 import cn.superid.manager.RoomManagerInterface;
-import org.kurento.client.Composite;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
@@ -48,10 +47,9 @@ public class RoomManagerImpl implements RoomManagerInterface{
     }
 
     @Override
-    public void removeRoom(Room room) {
-        rooms.remove(room.getRoomId());
-        room.close();
-        log.info("Room {} removed and closed", room.getRoomId());
+    public void removeRoom(String roomId) {
+        rooms.remove(roomId);
+        log.info("Room {} removed and closed", roomId);
     }
 
 }

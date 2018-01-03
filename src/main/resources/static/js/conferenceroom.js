@@ -12,6 +12,7 @@ window.onbeforeunload = function() {
 	ws.close();
 };
 
+
 ws.onmessage = function(message) {
 	var parsedMessage = JSON.parse(message.data);
 	console.info('Received message: ' + message.data);
@@ -98,7 +99,8 @@ function onIceCandidate(candidate) {
 
     var message = {
         id : 'onIceCandidate',
-        candidate : candidate
+        candidate : candidate,
+        userId: userId
     };
     sendMessage(message);
 }
@@ -134,9 +136,22 @@ function startResponse(message) {
     });
 }
 
+function leaveRoom() {
+    var message = {
+        id : 'leaveRoom',
+        userId: userId
+    };
+
+    document.getElementById('create').style.display = 'block';
+    document.getElementById('join').style.display = 'block';
+    document.getElementById('room').style.display = 'none';
+
+    sendMessage(message)
+}
+
 function sendMessage(message) {
 	var jsonMessage = JSON.stringify(message);
-	console.log('Senging message: ' + jsonMessage);
+	console.log('Sending message: ' + jsonMessage);
 	ws.send(jsonMessage);
 }
 

@@ -17,13 +17,6 @@ public interface UserManagerInterface {
     User getByUserId(String userId);
 
     /**
-     * 通过session获取用户
-     * @param sessionId
-     * @return
-     */
-    User getBySessionId(String sessionId);
-
-    /**
      * 通过用户标识清除用户数据
      * @param userId
      * @return

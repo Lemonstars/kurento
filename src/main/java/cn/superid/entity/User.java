@@ -39,21 +39,12 @@ public class User implements Closeable {
         return userId;
     }
 
-    public WebSocketSession getSession() {
-        return session;
-    }
-
     public String getRoomId() {
         return roomId;
     }
 
     public boolean isPresenter() {
         return isPresenter;
-    }
-
-    @Override
-    public void close() throws IOException {
-
     }
 
     private void sendMessage(JsonObject message) throws IOException {
@@ -64,6 +55,11 @@ public class User implements Closeable {
 
     public void addCandidate(IceCandidate candidate) {
         webRtcEndpoint.addIceCandidate(candidate);
+    }
+
+    @Override
+    public void close() throws IOException {
+        webRtcEndpoint.release();
     }
 
     @Override

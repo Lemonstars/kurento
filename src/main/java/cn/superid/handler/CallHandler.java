@@ -48,6 +48,9 @@ public class CallHandler extends TextWebSocketHandler {
             case "joinVideo":
                 joinVideo(jsonMessage, session);
                 break;
+            case "leaveRoom":
+                leaveRoom(jsonMessage);
+                break;
             case "onIceCandidate":
                 onIceCandidate(jsonMessage, session);
                 break;
@@ -58,8 +61,9 @@ public class CallHandler extends TextWebSocketHandler {
 
     private void onIceCandidate(JsonObject params, WebSocketSession session){
         JsonObject jsonCandidate = params.get("candidate").getAsJsonObject();
+        String userId = params.get("userId").getAsString();
 
-        User user = userManager.getBySessionId(session.getId());
+        User user = userManager.getByUserId(userId);
         if (user != null) {
             IceCandidate candidate = new IceCandidate(jsonCandidate.get("candidate").getAsString(),
                     jsonCandidate.get("sdpMid").getAsString(),
@@ -130,4 +134,20 @@ public class CallHandler extends TextWebSocketHandler {
         String sdpOffer = params.get("sdpOffer").getAsString();
         room.joinRoom(viewer, sdpOffer, session);
     }
+
+    private void leaveRoom(JsonObject params) throws IOException{
+        String userId = params.get("userId").getAsString();
+
+        User userToQuit = userManager.getByUserId(userId);
+        userToQuit.close();
+        userManager.removeByUserId(userId);
+
+        String roomId = userToQuit.getRoomId();
+        Room room = roomManager.getRoom(roomId);
+        if(room.isRoomEmpty()){
+            room.close();
+            roomManager.removeRoom(roomId);
+        }
+    }
+
 }

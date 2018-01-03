@@ -13,10 +13,10 @@ public interface RoomManagerInterface {
      * 根据房间名获取房间：
      * 如果房间不存在，则创建一个；若存在，则返回
      *
-     * @param roomName
+     * @param roomId
      * @return
      */
-    Room getRoom(String roomName);
+    Room getRoom(String roomId);
 
     /**
      * 通过房间标识判断房间是否存在
@@ -27,8 +27,8 @@ public interface RoomManagerInterface {
 
     /**
      * 移除房间记录
-     * @param room
+     * @param roomId
      */
-    void removeRoom(Room room);
+    void removeRoom(String roomId);
 
 }
