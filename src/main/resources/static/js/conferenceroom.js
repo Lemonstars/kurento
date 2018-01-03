@@ -62,9 +62,16 @@ function joinRoom() {
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
+    constrains = {
+        audio : true,
+        video : true
+    };
+
     var options = {
+        localVideo: undefined,
         remoteVideo : mixVideo,
-        onicecandidate : onIceCandidate
+        onicecandidate : onIceCandidate,
+        mediaConstraints: constrains
     };
 
     webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {

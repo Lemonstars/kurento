@@ -80,7 +80,11 @@ public class Room implements Closeable {
         webRtcEndpoint.gatherCandidates();
 
         HubPort hubPort = new HubPort.Builder(composite).build();
-        webRtcEndpoint.connect(hubPort);
+        if(user.isPresenter()){
+            webRtcEndpoint.connect(hubPort);
+        }else {
+            webRtcEndpoint.connect(hubPort, MediaType.AUDIO);
+        }
         outHubPort.connect(webRtcEndpoint);
     }
 

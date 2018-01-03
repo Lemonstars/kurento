@@ -124,7 +124,7 @@ public class CallHandler extends TextWebSocketHandler {
         }
 
         Room room = roomManager.getRoom(roomId);
-        User viewer = new User(userId, roomId, true, room.getPipeline(), session);
+        User viewer = new User(userId, roomId, false, room.getPipeline(), session);
         userManager.register(viewer);
 
         String sdpOffer = params.get("sdpOffer").getAsString();

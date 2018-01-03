@@ -19,7 +19,6 @@ public class User implements Closeable {
     private String userId;
     private String roomId;
     private boolean isPresenter;
-    private MediaPipeline mediaPipeline;
     private WebRtcEndpoint webRtcEndpoint;
     private final WebSocketSession session;
 
@@ -27,7 +26,6 @@ public class User implements Closeable {
         this.userId = userId;
         this.roomId = roomId;
         this.isPresenter = isPresenter;
-        this.mediaPipeline = mediaPipeline;
         this.session = session;
 
         this.webRtcEndpoint = new WebRtcEndpoint.Builder(mediaPipeline).build();
@@ -47,6 +45,10 @@ public class User implements Closeable {
 
     public String getRoomId() {
         return roomId;
+    }
+
+    public boolean isPresenter() {
+        return isPresenter;
     }
 
     @Override
