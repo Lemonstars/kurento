@@ -91,6 +91,7 @@ public class Room implements Closeable {
         if(!isRecord){
             outHubPort.connect(recorderEndpoint);
             recorderEndpoint.record();
+
             isRecord = true;
         }
 
@@ -107,18 +108,9 @@ public class Room implements Closeable {
     @Override
     public void close() {
         participants.clear();
-
-        pipeline.release(new Continuation<Void>() {
-            @Override
-            public void onSuccess(Void result) throws Exception {
-                log.trace("ROOM {}: Released Pipeline", Room.this.roomId);
-            }
-
-            @Override
-            public void onError(Throwable cause) throws Exception {
-                log.warn("PARTICIPANT {}: Could not release Pipeline", Room.this.roomId);
-            }
-        });
+        pipeline.release();
+        outHubPort.release();
+        composite.release();
 
         if (recorderEndpoint != null) {
             CountDownLatch stoppedCountDown = new CountDownLatch(1);

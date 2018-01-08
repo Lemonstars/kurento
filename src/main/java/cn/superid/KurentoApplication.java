@@ -41,7 +41,7 @@ public class KurentoApplication implements WebSocketConfigurer {
 
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create("ws://192.168.1.184:8888/kurento");
+        return KurentoClient.create("ws://192.168.1.202:8888/kurento");
     }
 
     public static void main(String[] args) throws Exception {
