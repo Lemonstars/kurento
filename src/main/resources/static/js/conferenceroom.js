@@ -19,7 +19,8 @@ ws.onmessage = function(message) {
 
 	switch (parsedMessage.id) {
         case 'roomId':
-            document.getElementById('room-header').innerText = 'ROOM ' + parsedMessage.roomId;
+            roomId = parsedMessage.roomId;
+            document.getElementById('room-header').innerText = roomId;
             uploadVideoAndAudio();
             break;
         case 'userState':
@@ -33,6 +34,9 @@ ws.onmessage = function(message) {
             break;
         case 'startResponse':
             startResponse(parsedMessage);
+            break;
+        case 'chatContent':
+            receiveChatContent(parsedMessage);
             break;
         default:
             console.error('Unrecognized message', parsedMessage);
@@ -147,6 +151,28 @@ function leaveRoom() {
     document.getElementById('room').style.display = 'none';
 
     sendMessage(message)
+}
+
+function obtainChatContent() {
+    var chatContent = document.getElementById('chatText').value;
+
+    var message = {
+        id : 'chatSend',
+        userId: userId,
+        roomId: roomId,
+        content: chatContent
+    };
+
+    sendMessage(message)
+}
+
+function receiveChatContent(message) {
+    var content = message.content;
+    var senderId = message.senderId;
+
+    var chatReceiveDiv = document.getElementById('chatReceive');
+    chatReceiveDiv.innerText += senderId +" : "+content;
+
 }
 
 function sendMessage(message) {

@@ -10,6 +10,9 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -95,6 +98,17 @@ public class Room implements Closeable {
             isRecord = true;
         }
 
+    }
+
+    public void transferChatContent(String content, String senderId) throws IOException{
+        Set<String> userIdSet = participants.keySet();
+        User receiver;
+        for (String userId: userIdSet) {
+            if(!senderId.equals(userId)){
+                receiver = participants.get(userId);
+                receiver.notifyChatContent(content, senderId);
+            }
+        }
     }
 
     public MediaPipeline getPipeline() {

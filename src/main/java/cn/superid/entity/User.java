@@ -109,4 +109,18 @@ public class User implements Closeable {
         sendMessage(jsonObject);
     }
 
+    /**
+     * 通知聊天内容
+     * @param content
+     * @throws IOException
+     */
+    public void notifyChatContent(String content, String senderId) throws IOException{
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "chatContent");
+        jsonObject.addProperty("senderId", senderId);
+        jsonObject.addProperty("content", content);
+
+        sendMessage(jsonObject);
+    }
+
 }
