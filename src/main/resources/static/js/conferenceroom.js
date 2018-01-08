@@ -155,6 +155,7 @@ function leaveRoom() {
 
 function obtainChatContent() {
     var chatContent = document.getElementById('chatText').value;
+    document.getElementById('chatText').value = '';
 
     var message = {
         id : 'chatSend',
@@ -170,8 +171,8 @@ function receiveChatContent(message) {
     var content = message.content;
     var senderId = message.senderId;
 
-    var chatReceiveDiv = document.getElementById('chatReceive');
-    chatReceiveDiv.innerText += senderId +" : "+content;
+    var chatReceiveDiv = document.getElementById('chatReceiveContent');
+    chatReceiveDiv.innerText += senderId +" : "+content+"\n";
 
 }
 

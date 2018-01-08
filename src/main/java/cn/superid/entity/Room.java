@@ -104,10 +104,8 @@ public class Room implements Closeable {
         Set<String> userIdSet = participants.keySet();
         User receiver;
         for (String userId: userIdSet) {
-            if(!senderId.equals(userId)){
-                receiver = participants.get(userId);
-                receiver.notifyChatContent(content, senderId);
-            }
+            receiver = participants.get(userId);
+            receiver.notifyChatContent(content, senderId);
         }
     }
 
