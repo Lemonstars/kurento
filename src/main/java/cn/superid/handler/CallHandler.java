@@ -55,14 +55,14 @@ public class CallHandler extends TextWebSocketHandler {
                 chatSend(jsonMessage);
                 break;
             case "onIceCandidate":
-                onIceCandidate(jsonMessage, session);
+                onIceCandidate(jsonMessage);
                 break;
             default:
                 break;
         }
     }
 
-    private void onIceCandidate(JsonObject params, WebSocketSession session){
+    private void onIceCandidate(JsonObject params){
         JsonObject jsonCandidate = params.get("candidate").getAsJsonObject();
         String userId = params.get("userId").getAsString();
 
@@ -75,7 +75,7 @@ public class CallHandler extends TextWebSocketHandler {
         }
     }
 
-    private void createRoom(JsonObject params, WebSocketSession session) throws IOException {
+    private void createRoom(JsonObject params, WebSocketSession session) {
         String userId = params.get("userId").getAsString();
 
         if(userManager.isUserFree(userId)){
@@ -147,9 +147,13 @@ public class CallHandler extends TextWebSocketHandler {
 
         String roomId = userToQuit.getRoomId();
         Room room = roomManager.getRoom(roomId);
+        room.removeUserId(userId);
+
         if(room.isRoomEmpty()){
             room.close();
             roomManager.removeRoom(roomId);
+        }else {
+            room.notifySomeoneLeft(userId);
         }
     }
 

@@ -47,9 +47,13 @@ public class User implements Closeable {
         return isPresenter;
     }
 
-    private void sendMessage(JsonObject message) throws IOException {
-        synchronized (session) {
-            session.sendMessage(new TextMessage(message.toString()));
+    private void sendMessage(JsonObject message){
+        try {
+            synchronized (session) {
+                session.sendMessage(new TextMessage(message.toString()));
+            }
+        }catch (IOException e){
+            e.printStackTrace();
         }
     }
 
@@ -87,9 +91,8 @@ public class User implements Closeable {
 
     /**
      * 通知用户已加入其它的视频会议
-     * @throws IOException
      */
-    public void notifyUserBusy() throws IOException{
+    public void notifyUserBusy(){
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "userState");
 
@@ -99,9 +102,8 @@ public class User implements Closeable {
     /**
      * 通知视频发起者房间的标识
      * @param roomId
-     * @throws IOException
      */
-    public void notifyPresenterRoomId(String roomId) throws IOException{
+    public void notifyPresenterRoomId(String roomId){
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "roomId");
         jsonObject.addProperty("roomId", roomId);
@@ -112,13 +114,36 @@ public class User implements Closeable {
     /**
      * 通知聊天内容
      * @param content
-     * @throws IOException
      */
-    public void notifyChatContent(String content, String senderId) throws IOException{
+    public void notifyChatContent(String content, String senderId){
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "chatContent");
         jsonObject.addProperty("senderId", senderId);
         jsonObject.addProperty("content", content);
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 将离开房间的用户的标识通知给其他人
+     * @param leftUserId
+     */
+    public void notifyLeftUserId(String leftUserId){
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "leftUserId");
+        jsonObject.addProperty("userId", leftUserId);
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 通知加入房间的用户的标识
+     * @param joinUserId
+     */
+    public void notifyJoinUserId(String joinUserId){
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "joinUserId");
+        jsonObject.addProperty("userId", joinUserId);
 
         sendMessage(jsonObject);
     }

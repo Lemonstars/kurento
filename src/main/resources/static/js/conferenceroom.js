@@ -12,7 +12,6 @@ window.onbeforeunload = function() {
 	ws.close();
 };
 
-
 ws.onmessage = function(message) {
 	var parsedMessage = JSON.parse(message.data);
 	console.info('Received message: ' + message.data);
@@ -20,7 +19,7 @@ ws.onmessage = function(message) {
 	switch (parsedMessage.id) {
         case 'roomId':
             roomId = parsedMessage.roomId;
-            document.getElementById('room-header').innerText = roomId;
+            document.getElementById('room-header').innerText = "roomId "+roomId +"\n" + "userId "+userId;
             uploadVideoAndAudio();
             break;
         case 'userState':
@@ -37,6 +36,12 @@ ws.onmessage = function(message) {
             break;
         case 'chatContent':
             receiveChatContent(parsedMessage);
+            break;
+        case 'leftUserId':
+            receiveSomeoneLeft(parsedMessage);
+            break;
+        case 'joinUserId':
+            receiveSomeoneJoin(parsedMessage);
             break;
         default:
             console.error('Unrecognized message', parsedMessage);
@@ -62,7 +67,7 @@ function joinRoom() {
     userId = document.getElementById('user-join').value;
     roomId = document.getElementById('room-join').value;
 
-    document.getElementById('room-header').innerText = 'ROOM ' + roomId;
+    document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
     document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
@@ -174,6 +179,20 @@ function receiveChatContent(message) {
     var chatReceiveDiv = document.getElementById('chatReceiveContent');
     chatReceiveDiv.innerText += senderId +" : "+content+"\n";
 
+}
+
+function receiveSomeoneLeft(message) {
+    var leftUserId = message.userId;
+
+    var chatReceiveDiv = document.getElementById('chatReceiveContent');
+    chatReceiveDiv.innerText += 'user ' + leftUserId + ' leave the room\n';
+}
+
+function receiveSomeoneJoin(message) {
+    var joinUserId = message.userId;
+
+    var chatReceiveDiv = document.getElementById('chatReceiveContent');
+    chatReceiveDiv.innerText += 'user ' + joinUserId + ' join the room\n';
 }
 
 function sendMessage(message) {

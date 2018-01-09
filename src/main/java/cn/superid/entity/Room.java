@@ -98,14 +98,33 @@ public class Room implements Closeable {
             isRecord = true;
         }
 
+        notifySomeoneJoin(user.getUserId());
     }
 
-    public void transferChatContent(String content, String senderId) throws IOException{
+    public void transferChatContent(String content, String senderId){
         Set<String> userIdSet = participants.keySet();
         User receiver;
         for (String userId: userIdSet) {
             receiver = participants.get(userId);
             receiver.notifyChatContent(content, senderId);
+        }
+    }
+
+    public void notifySomeoneLeft(String leftUserId){
+        Set<String> allUserId = participants.keySet();
+        User userToNotify;
+        for(String userId: allUserId){
+            userToNotify = participants.get(userId);
+            userToNotify.notifyLeftUserId(leftUserId);
+        }
+    }
+
+    public void notifySomeoneJoin(String joinUserId){
+        Set<String> allUserId = participants.keySet();
+        User userToNotify;
+        for(String userId: allUserId){
+            userToNotify = participants.get(userId);
+            userToNotify.notifyJoinUserId(joinUserId);
         }
     }
 
@@ -115,6 +134,10 @@ public class Room implements Closeable {
 
     public boolean isRoomEmpty(){
         return participants.isEmpty();
+    }
+
+    public void removeUserId(String removeUserId){
+        participants.remove(removeUserId);
     }
 
     @Override
