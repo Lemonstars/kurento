@@ -47,6 +47,12 @@ ws.onmessage = function(message) {
         case 'joinUserId':
             receiveSomeoneJoin(parsedMessage);
             break;
+        case 'receiveApply':
+            receiveApply(parsedMessage);
+            break;
+        case 'applyRefused':
+            applyRefused();
+            break;
         default:
             console.error('Unrecognized message', parsedMessage);
     }
@@ -75,6 +81,8 @@ function joinRoom() {
     document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
+
+    document.getElementById('applyForHost').style.display = 'block';
 
     constrains = {
         audio : true,
@@ -167,7 +175,7 @@ function obtainChatContent() {
     document.getElementById('chatText').value = '';
 
     var message = {
-        id : 'chatSend',
+        id: 'chatSend',
         userId: userId,
         roomId: roomId,
         content: chatContent
@@ -176,13 +184,61 @@ function obtainChatContent() {
     sendMessage(message)
 }
 
+function applyForHost() {
+    document.getElementById('applyForHost').style.display = 'none';
+
+    var message = {
+        id: 'applyForHost',
+        userId: userId
+    };
+
+    sendMessage(message)
+}
+
+function receiveApply(message) {
+    var applyId = message.userId;
+
+    var receiveApplyDiv = document.getElementById('receiveApply');
+    receiveApplyDiv.style.display = 'block';
+
+    var applyInfoDiv = document.getElementById('applyInfo');
+    applyInfoDiv.value = applyId;
+    applyInfoDiv.innerText += applyId +" : apply for the host\n";
+}
+
+function refuseApply() {
+    document.getElementById('receiveApply').style.display = 'none';
+
+    var applyUserId = document.getElementById('applyInfo').value;
+    var message = {
+        id: 'refuseApply',
+        applyUserId: applyUserId
+    };
+    sendMessage(message);
+}
+
+function acceptApply() {
+    document.getElementById('receiveApply').style.display = 'none';
+
+    var applyUserId = document.getElementById('applyInfo').value;
+    var message = {
+        id: 'acceptApply',
+        applyUserId: applyUserId
+    };
+    sendMessage(message);
+}
+
+function applyRefused() {
+    document.getElementById('applyForHost').style.display = 'block';
+    document.getElementById('applyInfo').innerText += 'Your apply is refused \n';
+}
+
 function receiveChatContent(message) {
     var content = message.content;
     var senderId = message.senderId;
 
     var chatReceiveDiv = document.getElementById('chatReceiveContent');
     chatReceiveDiv.innerText += senderId +" : "+content+"\n";
-
 }
 
 function receiveSomeoneLeft(message) {
@@ -204,7 +260,6 @@ function sendMessage(message) {
 	console.log('Sending message: ' + jsonMessage);
 	ws.send(jsonMessage);
 }
-
 
 
 

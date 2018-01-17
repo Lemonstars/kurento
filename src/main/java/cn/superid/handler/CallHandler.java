@@ -54,6 +54,15 @@ public class CallHandler extends TextWebSocketHandler {
             case "chatSend":
                 chatSend(jsonMessage);
                 break;
+            case "applyForHost":
+                applyForHost(jsonMessage);
+                break;
+            case "refuseApply":
+                refuseApply(jsonMessage);
+                break;
+            case "acceptApply":
+                acceptApply(jsonMessage);
+                break;
             case "onIceCandidate":
                 onIceCandidate(jsonMessage);
                 break;
@@ -166,4 +175,26 @@ public class CallHandler extends TextWebSocketHandler {
         room.transferChatContent(content, userId);
     }
 
+    private void applyForHost(JsonObject params) throws IOException{
+        String userId = params.get("userId").getAsString();
+        User applyUser = userManager.getByUserId(userId);
+        String roomId = applyUser.getRoomId();
+        Room currentRoom = roomManager.getRoom(roomId);
+        User presenter = currentRoom.getPresenter();
+        if(presenter != null){
+            presenter.notifyApplyForHost(userId);
+        }
+    }
+
+    private void refuseApply(JsonObject params) throws IOException{
+        String applyUserId = params.get("applyUserId").getAsString();
+        User user = userManager.getByUserId(applyUserId);
+        user.notifyApplyRefused();
+    }
+
+    private void acceptApply(JsonObject params) throws IOException{
+        String userId = params.get("userId").getAsString();
+        User user = userManager.getByUserId(userId);
+    }
 }
+

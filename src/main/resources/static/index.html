@@ -41,6 +41,18 @@
             <input type="button" id="button-leave"  value="Leave room" onclick="leaveRoom()">
         </div>
 
+        <div id="apply">
+            <h1>Apply</h1>
+            <div id="applyInfo"></div>
+            <div id="applyForHost" style="display: none">
+                <input type="button" value="apply for host" onclick="applyForHost()">
+            </div>
+            <div id="receiveApply" style="display: none">
+                <input type="button" value="accept the apply" onclick="acceptApply()">
+                <input type="button" value="refuse for apply" onclick="refuseApply()">
+            </div>
+        </div>
+
         <div id="chatReceive">
             <h1>Chat Content</h1>
             <div id="chatSend">

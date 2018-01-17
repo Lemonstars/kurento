@@ -10,6 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -136,6 +137,19 @@ public class Room implements Closeable {
 
     public void removeUserId(String removeUserId){
         participants.remove(removeUserId);
+    }
+
+    public User getPresenter(){
+        Set<String> set = participants.keySet();
+        Iterator<String> iterable = set.iterator();
+        while (iterable.hasNext()){
+            String key = iterable.next();
+            User user = participants.get(key);
+            if(user.isPresenter()){
+                return user;
+            }
+        }
+        return null;
     }
 
     @Override

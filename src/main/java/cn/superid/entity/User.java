@@ -66,29 +66,6 @@ public class User implements Closeable {
         webRtcEndpoint.release();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || !(obj instanceof User)) {
-            return false;
-        }
-        User other = (User) obj;
-        boolean eq = userId.equals(other.userId);
-        eq &= roomId.equals(other.roomId);
-        return eq;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 1;
-        result = 31 * result + userId.hashCode();
-        result = 31 * result + roomId.hashCode();
-        return result;
-    }
-
     /**
      * 通知用户已加入其它的视频会议
      */
@@ -144,6 +121,28 @@ public class User implements Closeable {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "joinUserId");
         jsonObject.addProperty("userId", joinUserId);
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 通知有成员申请使用摄像头
+     * @param applyUserId
+     */
+    public void notifyApplyForHost(String applyUserId){
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "receiveApply");
+        jsonObject.addProperty("userId", applyUserId);
+
+        sendMessage(jsonObject);
+    }
+
+    /**
+     * 通知摄像头申请被拒绝
+     */
+    public void notifyApplyRefused(){
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("id", "applyRefused");
 
         sendMessage(jsonObject);
     }
