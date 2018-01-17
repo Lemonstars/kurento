@@ -194,7 +194,14 @@ public class CallHandler extends TextWebSocketHandler {
 
     private void acceptApply(JsonObject params) throws IOException{
         String userId = params.get("userId").getAsString();
-        User user = userManager.getByUserId(userId);
+        User currentPresenter = userManager.getByUserId(userId);
+
+        String applyUserId = params.get("applyUserId").getAsString();
+        User applyUser = userManager.getByUserId(applyUserId);
+
+        String roomId = applyUser.getRoomId();
+        Room currentRoom = roomManager.getRoom(roomId);
+        currentRoom.changeCameraHost(currentPresenter, applyUser);
     }
 }
 

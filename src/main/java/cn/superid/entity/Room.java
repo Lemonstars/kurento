@@ -81,6 +81,7 @@ public class Room implements Closeable {
         webRtcEndpoint.gatherCandidates();
 
         HubPort hubPort = new HubPort.Builder(composite).build();
+        user.setHubPort(hubPort);
         if(user.isPresenter()){
             webRtcEndpoint.connect(hubPort);
         }else {
@@ -98,6 +99,22 @@ public class Room implements Closeable {
         }
 
         notifySomeoneJoin(user.getUserId());
+    }
+
+    public void changeCameraHost(User currentPresenter, User applier){
+        WebRtcEndpoint currentWebRtcEndpoint = currentPresenter.getWebRtcEndpoint();
+        HubPort currentHubPort = currentPresenter.getHubPort();
+        currentWebRtcEndpoint.disconnect(currentHubPort);
+
+        WebRtcEndpoint applierWebRtcEndpoint = applier.getWebRtcEndpoint();
+        HubPort applierHubPort = applier.getHubPort();
+        applierWebRtcEndpoint.disconnect(applierHubPort);
+
+        currentWebRtcEndpoint.connect(currentHubPort, MediaType.AUDIO);
+        applierWebRtcEndpoint.connect(applierHubPort);
+
+        currentPresenter.setPresenter(false);
+        applier.setPresenter(true);
     }
 
     public void transferChatContent(String content, String senderId){

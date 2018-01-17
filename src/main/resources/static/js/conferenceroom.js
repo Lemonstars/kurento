@@ -223,6 +223,7 @@ function acceptApply() {
     var applyUserId = document.getElementById('applyInfo').value;
     var message = {
         id: 'acceptApply',
+        userId: userId,
         applyUserId: applyUserId
     };
     sendMessage(message);

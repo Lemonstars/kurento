@@ -1,6 +1,7 @@
 package cn.superid.entity;
 
 import com.google.gson.JsonObject;
+import org.kurento.client.HubPort;
 import org.kurento.client.IceCandidate;
 import org.kurento.client.MediaPipeline;
 import org.kurento.client.WebRtcEndpoint;
@@ -20,6 +21,7 @@ public class User implements Closeable {
     private String roomId;
     private boolean isPresenter;
     private WebRtcEndpoint webRtcEndpoint;
+    private HubPort hubPort;
     private final WebSocketSession session;
 
     public User(String userId, String roomId, boolean isPresenter, MediaPipeline mediaPipeline, WebSocketSession session) {
@@ -45,6 +47,18 @@ public class User implements Closeable {
 
     public boolean isPresenter() {
         return isPresenter;
+    }
+
+    public void setPresenter(boolean presenter) {
+        isPresenter = presenter;
+    }
+
+    public HubPort getHubPort() {
+        return hubPort;
+    }
+
+    public void setHubPort(HubPort hubPort) {
+        this.hubPort = hubPort;
     }
 
     private void sendMessage(JsonObject message){
