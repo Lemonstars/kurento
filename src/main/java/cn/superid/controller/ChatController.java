@@ -42,8 +42,14 @@ public class ChatController {
         Room currentRoom = roomManager.getRoom(roomId);
         User presenter = currentRoom.getPresenter();
         if(presenter != null){
-            simpMessagingTemplate.convertAndSend("/queue/receiveApply", userId);
+            simpMessagingTemplate.convertAndSend("/queue/receiveApply-" + presenter.getUserId(), userId);
         }
     }
+
+//    @MessageMapping("/refuseApply/{applyUserId}")
+//    public void refuseApply(@DestinationVariable String applyUserId){
+//        User user = userManager.getByUserId(applyUserId);
+//        simpMessagingTemplate.convertAndSend("/queue/applyRefused", applyUserId);
+//    }
 
 }

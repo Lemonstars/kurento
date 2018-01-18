@@ -38,9 +38,6 @@ public class CallHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "applyForHost":
-                applyForHost(jsonMessage);
-                break;
             case "refuseApply":
                 refuseApply(jsonMessage);
                 break;
@@ -49,17 +46,6 @@ public class CallHandler extends TextWebSocketHandler {
                 break;
             default:
                 break;
-        }
-    }
-
-    private void applyForHost(JsonObject params) throws IOException{
-        String userId = params.get("userId").getAsString();
-        User applyUser = userManager.getByUserId(userId);
-        String roomId = applyUser.getRoomId();
-        Room currentRoom = roomManager.getRoom(roomId);
-        User presenter = currentRoom.getPresenter();
-        if(presenter != null){
-            presenter.notifyApplyForHost(userId);
         }
     }
 

@@ -68,7 +68,7 @@ function createRoom() {
             });
         });
 
-        stompClient.subscribe('/queue/receiveApply', function (frame) {
+        stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
             receiveApply(JSON.parse(frame.body));
         });
 
@@ -105,9 +105,21 @@ function joinRoom() {
             });
         });
 
+        stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
+            receiveApply(JSON.parse(frame.body));
+        });
+
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
             receiveChatContent(JSON.parse(frame.body));
         });
+
+        stompClient.subscribe('/topic/leftUserId-' + roomId, function (frame) {
+            receiveSomeoneLeft(frame.body);
+        });
+
+        stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {
+            receiveSomeoneJoin(frame.body);
+        })
 
         var options = {
             remoteVideo : mixVideo,
@@ -211,13 +223,8 @@ function receiveApply(applyId) {
 
 function refuseApply() {
     document.getElementById('receiveApply').style.display = 'none';
-
     var applyUserId = document.getElementById('applyInfo').value;
-    var message = {
-        id: 'refuseApply',
-        applyUserId: applyUserId
-    };
-    // sendMessage(message);
+    stompClient.send('/app/refuseApply/' + applyUserId, null ,null);
 }
 
 function acceptApply() {
