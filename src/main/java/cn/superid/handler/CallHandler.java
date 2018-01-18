@@ -38,12 +38,6 @@ public class CallHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "joinVideo":
-                joinVideo(jsonMessage, session);
-                break;
-            case "leaveRoom":
-                leaveRoom(jsonMessage);
-                break;
             case "chatSend":
                 chatSend(jsonMessage);
                 break;
@@ -58,55 +52,6 @@ public class CallHandler extends TextWebSocketHandler {
                 break;
             default:
                 break;
-        }
-    }
-
-    private void joinVideo(JsonObject params, WebSocketSession session) throws IOException{
-        String userId = params.get("userId").getAsString();
-        String roomId = params.get("roomId").getAsString();
-
-        if(!roomManager.isRoomExist(roomId)){
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", "roomState");
-            jsonObject.addProperty("state", "room not exist");
-
-            session.sendMessage(new TextMessage(jsonObject.toString()));
-            return;
-        }
-
-        if(!userManager.isUserFree(userId)){
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", "userState");
-            jsonObject.addProperty("state", "user is an anther video");
-
-            session.sendMessage(new TextMessage(jsonObject.toString()));
-            return;
-        }
-
-        Room room = roomManager.getRoom(roomId);
-        User viewer = new User(userId, roomId, false, room.getPipeline());
-        userManager.register(viewer);
-
-        String sdpOffer = params.get("sdpOffer").getAsString();
-//        room.joinRoom(viewer, sdpOffer);
-    }
-
-    private void leaveRoom(JsonObject params) throws IOException{
-        String userId = params.get("userId").getAsString();
-
-        User userToQuit = userManager.getByUserId(userId);
-        userToQuit.close();
-        userManager.removeByUserId(userId);
-
-        String roomId = userToQuit.getRoomId();
-        Room room = roomManager.getRoom(roomId);
-        room.removeUserId(userId);
-
-        if(room.isRoomEmpty()){
-            room.close();
-            roomManager.removeRoom(roomId);
-        }else {
-            room.notifySomeoneLeft(userId);
         }
     }
 

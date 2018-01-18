@@ -1,4 +1,3 @@
-// var ws = new WebSocket('wss://' + location.host + '/groupCall');
 
 var stompClient;
 var mixVideo;
@@ -16,14 +15,6 @@ window.onload = function() {
 // 	console.info('Received message: ' + message.data);
 //
 // 	switch (parsedMessage.id) {
-//         case 'iceCandidate':
-//             webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
-//                 if (error) return console.error('Error adding candidate: ' + error);
-//             });
-//             break;
-//         case 'startResponse':
-//             startResponse(parsedMessage);
-//             break;
 //         case 'chatContent':
 //             receiveChatContent(parsedMessage);
 //             break;
@@ -85,16 +76,13 @@ function joinRoom() {
     userId = document.getElementById('user-join').value;
     roomId = document.getElementById('room-join').value;
 
+    document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
     document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
     document.getElementById('applyForHost').style.display = 'block';
 
-    // constrains = {
-    //     audio : true,
-    //     video : true
-    // };
 
     var socket = new SockJS('/kurento');
     stompClient = Stomp.over(socket);

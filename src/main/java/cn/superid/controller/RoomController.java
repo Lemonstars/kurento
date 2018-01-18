@@ -89,4 +89,22 @@ public class RoomController {
         room.joinRoom(viewer, sdpOffer, simpMessagingTemplate);
     }
 
+    @MessageMapping("/leaveRoom/{userId}")
+    public void leaveRoom(@DestinationVariable String userId){
+        User userToQuit = userManager.getByUserId(userId);
+        userToQuit.close();
+        userManager.removeByUserId(userId);
+
+        String roomId = userToQuit.getRoomId();
+        Room room = roomManager.getRoom(roomId);
+        room.removeUserId(userId);
+
+        if(room.isRoomEmpty()){
+            room.close();
+            roomManager.removeRoom(roomId);
+        }else {
+            room.notifySomeoneLeft(userId);
+        }
+    }
+
 }
