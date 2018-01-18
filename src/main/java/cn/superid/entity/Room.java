@@ -76,7 +76,7 @@ public class Room implements Closeable {
             isRecord = true;
         }
 
-        notifySomeoneJoin(user.getUserId());
+        messagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, user.getUserId());
     }
 
     public void changeCameraHost(User currentPresenter, User applier){

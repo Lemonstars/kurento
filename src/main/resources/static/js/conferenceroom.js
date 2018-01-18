@@ -15,9 +15,6 @@ window.onload = function() {
 // 	console.info('Received message: ' + message.data);
 //
 // 	switch (parsedMessage.id) {
-//         case 'leftUserId':
-//             receiveSomeoneLeft(parsedMessage);
-//             break;
 //         case 'joinUserId':
 //             receiveSomeoneJoin(parsedMessage);
 //             break;
@@ -60,6 +57,9 @@ function createRoom() {
                 receiveSomeoneLeft(frame.body);
             });
 
+            stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {
+                receiveSomeoneJoin(frame.body);
+            })
         });
 
         stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
@@ -73,6 +73,7 @@ function createRoom() {
                 if (error) return console.error('Error adding candidate: ' + error);
             });
         });
+
 
         stompClient.send('/app/createRoom/' + userId, {},  null);
     });
@@ -246,9 +247,7 @@ function receiveSomeoneLeft(leftUserId) {
     chatReceiveDiv.innerText += 'user ' + leftUserId + ' leave the room\n';
 }
 
-function receiveSomeoneJoin(message) {
-    var joinUserId = message.userId;
-
+function receiveSomeoneJoin(joinUserId) {
     var chatReceiveDiv = document.getElementById('chatReceiveContent');
     chatReceiveDiv.innerText += 'user ' + joinUserId + ' join the room\n';
 }
