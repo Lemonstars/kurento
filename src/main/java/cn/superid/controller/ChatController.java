@@ -46,10 +46,9 @@ public class ChatController {
         }
     }
 
-//    @MessageMapping("/refuseApply/{applyUserId}")
-//    public void refuseApply(@DestinationVariable String applyUserId){
-//        User user = userManager.getByUserId(applyUserId);
-//        simpMessagingTemplate.convertAndSend("/queue/applyRefused", applyUserId);
-//    }
+    @MessageMapping("/refuseApply/{applyUserId}")
+    public void refuseApply(@DestinationVariable String applyUserId){
+        simpMessagingTemplate.convertAndSend("/queue/applyRefused-" + applyUserId, applyUserId);
+    }
 
 }

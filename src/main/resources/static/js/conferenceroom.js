@@ -9,20 +9,6 @@ window.onload = function() {
 	mixVideo = document.getElementById('mixVideo');
 };
 
-
-// ws.onmessage = function(message) {
-// 	var parsedMessage = JSON.parse(message.data);
-// 	console.info('Received message: ' + message.data);
-//
-// 	switch (parsedMessage.id) {
-//         case 'applyRefused':
-//             applyRefused();
-//             break;
-//         default:
-//             console.error('Unrecognized message', parsedMessage);
-//     }
-// };
-
 function createRoom() {
     userId = document.getElementById('user-create').value;
 
@@ -72,6 +58,10 @@ function createRoom() {
             receiveApply(JSON.parse(frame.body));
         });
 
+        stompClient.subscribe('/queue/applyRefused-' + userId, function () {
+            applyRefused();
+        });
+
         stompClient.send('/app/createRoom/' + userId, {},  null);
     });
 
@@ -107,6 +97,10 @@ function joinRoom() {
 
         stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
             receiveApply(JSON.parse(frame.body));
+        });
+
+        stompClient.subscribe('/queue/applyRefused-' + userId, function () {
+            applyRefused();
         });
 
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
