@@ -38,21 +38,12 @@ public class CallHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "refuseApply":
-                refuseApply(jsonMessage);
-                break;
             case "acceptApply":
                 acceptApply(jsonMessage);
                 break;
             default:
                 break;
         }
-    }
-
-    private void refuseApply(JsonObject params) throws IOException{
-        String applyUserId = params.get("applyUserId").getAsString();
-        User user = userManager.getByUserId(applyUserId);
-        user.notifyApplyRefused();
     }
 
     private void acceptApply(JsonObject params) throws IOException{

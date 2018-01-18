@@ -1,5 +1,6 @@
 package cn.superid.controller;
 
+import cn.superid.bean.form.ApplyAcceptForm;
 import cn.superid.bean.form.ChatContentForm;
 import cn.superid.entity.Room;
 import cn.superid.entity.User;
@@ -49,6 +50,19 @@ public class ChatController {
     @MessageMapping("/refuseApply/{applyUserId}")
     public void refuseApply(@DestinationVariable String applyUserId){
         simpMessagingTemplate.convertAndSend("/queue/applyRefused-" + applyUserId, applyUserId);
+    }
+
+    @MessageMapping("/acceptApply")
+    public void acceptApply(ApplyAcceptForm applyAcceptForm){
+        String presenterId = applyAcceptForm.getPresenterId();
+        String applierId = applyAcceptForm.getApplierId();
+
+        User currentPresenter = userManager.getByUserId(presenterId);
+        User applyUser = userManager.getByUserId(applierId);
+
+        String roomId = applyUser.getRoomId();
+        Room currentRoom = roomManager.getRoom(roomId);
+        currentRoom.changeCameraHost(currentPresenter, applyUser);
     }
 
 }

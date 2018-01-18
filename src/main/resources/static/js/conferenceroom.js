@@ -55,7 +55,7 @@ function createRoom() {
         });
 
         stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
-            receiveApply(JSON.parse(frame.body));
+            receiveApply(frame.body);
         });
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
@@ -226,11 +226,11 @@ function acceptApply() {
 
     var applyUserId = document.getElementById('applyInfo').value;
     var message = {
-        id: 'acceptApply',
-        userId: userId,
-        applyUserId: applyUserId
+        presenterId: userId,
+        applierId: applyUserId
     };
-    // sendMessage(message);
+
+    stompClient.send('/app/acceptApply', null, JSON.stringify(message));
 }
 
 function applyRefused() {
