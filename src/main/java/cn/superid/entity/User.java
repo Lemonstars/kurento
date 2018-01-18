@@ -22,13 +22,11 @@ public class User implements Closeable {
     private boolean isPresenter;
     private WebRtcEndpoint webRtcEndpoint;
     private HubPort hubPort;
-    private final WebSocketSession session;
 
-    public User(String userId, String roomId, boolean isPresenter, MediaPipeline mediaPipeline, WebSocketSession session) {
+    public User(String userId, String roomId, boolean isPresenter, MediaPipeline mediaPipeline) {
         this.userId = userId;
         this.roomId = roomId;
         this.isPresenter = isPresenter;
-        this.session = session;
 
         this.webRtcEndpoint = new WebRtcEndpoint.Builder(mediaPipeline).build();
     }
@@ -61,15 +59,6 @@ public class User implements Closeable {
         this.hubPort = hubPort;
     }
 
-    private void sendMessage(JsonObject message){
-        try {
-            synchronized (session) {
-                session.sendMessage(new TextMessage(message.toString()));
-            }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
 
     public void addCandidate(IceCandidate candidate) {
         webRtcEndpoint.addIceCandidate(candidate);
@@ -87,7 +76,7 @@ public class User implements Closeable {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "userState");
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -99,7 +88,7 @@ public class User implements Closeable {
         jsonObject.addProperty("id", "roomId");
         jsonObject.addProperty("roomId", roomId);
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -112,7 +101,7 @@ public class User implements Closeable {
         jsonObject.addProperty("senderId", senderId);
         jsonObject.addProperty("content", content);
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -124,7 +113,7 @@ public class User implements Closeable {
         jsonObject.addProperty("id", "leftUserId");
         jsonObject.addProperty("userId", leftUserId);
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -136,7 +125,7 @@ public class User implements Closeable {
         jsonObject.addProperty("id", "joinUserId");
         jsonObject.addProperty("userId", joinUserId);
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -148,7 +137,7 @@ public class User implements Closeable {
         jsonObject.addProperty("id", "receiveApply");
         jsonObject.addProperty("userId", applyUserId);
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
     /**
@@ -158,7 +147,7 @@ public class User implements Closeable {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "applyRefused");
 
-        sendMessage(jsonObject);
+//        sendMessage(jsonObject);
     }
 
 }

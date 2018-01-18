@@ -5,6 +5,7 @@ import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -47,35 +48,17 @@ public class Room implements Closeable {
         log.info("ROOM {} has been created", roomId);
     }
 
-    public void joinRoom(User user, String sdpOffer, WebSocketSession session){
+    public void joinRoom(User user, String sdpOffer, SimpMessagingTemplate messagingTemplate){
         WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
 
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-        JsonObject response = new JsonObject();
-        response.addProperty("id", "startResponse");
-        response.addProperty("sdpAnswer", sdpAnswer);
 
-        try {
-            synchronized (session) {
-                session.sendMessage(new TextMessage(response.toString()));
-            }
-        }catch (IOException e){
-            e.printStackTrace();
-        }
+        messagingTemplate.convertAndSend("/queue/startResponse-" + user.getUserId(), sdpAnswer);
 
         webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
-                JsonObject response = new JsonObject();
-                response.addProperty("id", "iceCandidate");
-                response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
-                try {
-                    synchronized (session) {
-                        session.sendMessage(new TextMessage(response.toString()));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                messagingTemplate.convertAndSend("/queue/iceCandidate-" + user.getUserId(), event.getCandidate());
             }
         });
         webRtcEndpoint.gatherCandidates();

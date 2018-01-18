@@ -1,4 +1,6 @@
-var ws = new WebSocket('wss://' + location.host + '/groupCall');
+// var ws = new WebSocket('wss://' + location.host + '/groupCall');
+
+var stompClient;
 var mixVideo;
 var webRtcPeer;
 var userId;
@@ -8,98 +10,120 @@ window.onload = function() {
 	mixVideo = document.getElementById('mixVideo');
 };
 
-window.onbeforeunload = function() {
-	ws.close();
-};
 
-ws.onclose = function () {
-  leaveRoom();
-};
-
-ws.onmessage = function(message) {
-	var parsedMessage = JSON.parse(message.data);
-	console.info('Received message: ' + message.data);
-
-	switch (parsedMessage.id) {
-        case 'roomId':
-            roomId = parsedMessage.roomId;
-            document.getElementById('room-header').innerText = "roomId "+roomId +"\n" + "userId "+userId;
-            uploadVideoAndAudio();
-            break;
-        case 'userState':
-            console.log('The user is on anther video');
-            document.getElementById('room-header').innerText = 'The user is on anther video';
-            break;
-        case 'iceCandidate':
-            webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
-                if (error) return console.error('Error adding candidate: ' + error);
-            });
-            break;
-        case 'startResponse':
-            startResponse(parsedMessage);
-            break;
-        case 'chatContent':
-            receiveChatContent(parsedMessage);
-            break;
-        case 'leftUserId':
-            receiveSomeoneLeft(parsedMessage);
-            break;
-        case 'joinUserId':
-            receiveSomeoneJoin(parsedMessage);
-            break;
-        case 'receiveApply':
-            receiveApply(parsedMessage);
-            break;
-        case 'applyRefused':
-            applyRefused();
-            break;
-        default:
-            console.error('Unrecognized message', parsedMessage);
-    }
-};
+// ws.onmessage = function(message) {
+// 	var parsedMessage = JSON.parse(message.data);
+// 	console.info('Received message: ' + message.data);
+//
+// 	switch (parsedMessage.id) {
+//         case 'iceCandidate':
+//             webRtcPeer.addIceCandidate(parsedMessage.candidate, function(error) {
+//                 if (error) return console.error('Error adding candidate: ' + error);
+//             });
+//             break;
+//         case 'startResponse':
+//             startResponse(parsedMessage);
+//             break;
+//         case 'chatContent':
+//             receiveChatContent(parsedMessage);
+//             break;
+//         case 'leftUserId':
+//             receiveSomeoneLeft(parsedMessage);
+//             break;
+//         case 'joinUserId':
+//             receiveSomeoneJoin(parsedMessage);
+//             break;
+//         case 'receiveApply':
+//             receiveApply(parsedMessage);
+//             break;
+//         case 'applyRefused':
+//             applyRefused();
+//             break;
+//         default:
+//             console.error('Unrecognized message', parsedMessage);
+//     }
+// };
 
 function createRoom() {
     userId = document.getElementById('user-create').value;
 
+    document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
 	document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
 	document.getElementById('room').style.display = 'block';
 
-	var message = {
-		id : 'createRoom',
-        userId : userId
-	};
+    var socket = new SockJS('/kurento');
+    stompClient = Stomp.over(socket);
 
-	sendMessage(message);
+    stompClient.connect({}, function (frame) {
+
+        stompClient.subscribe('/queue/roomId-' + userId, function (frame) {
+            roomId = JSON.parse(frame.body).data;
+
+            document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
+            uploadVideoAndAudio();
+        });
+
+        stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
+            webRtcPeer.processAnswer(frame.body, function(error) {
+                if (error) return console.error(error);
+            });
+        });
+
+        stompClient.subscribe('/queue/iceCandidate-' + userId, function (frame) {
+            webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
+                if (error) return console.error('Error adding candidate: ' + error);
+            });
+        });
+
+        stompClient.send('/app/createRoom/' + userId, {},  null);
+    });
+
 }
 
 function joinRoom() {
     userId = document.getElementById('user-join').value;
     roomId = document.getElementById('room-join').value;
 
-    document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
     document.getElementById('create').style.display = 'none';
     document.getElementById('join').style.display = 'none';
     document.getElementById('room').style.display = 'block';
 
     document.getElementById('applyForHost').style.display = 'block';
 
-    constrains = {
-        audio : true,
-        video : true
-    };
+    // constrains = {
+    //     audio : true,
+    //     video : true
+    // };
 
-    var options = {
-        localVideo: undefined,
-        remoteVideo : mixVideo,
-        onicecandidate : onIceCandidate,
-        mediaConstraints: constrains
-    };
+    var socket = new SockJS('/kurento');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function (frame) {
 
-    webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
-        if (error) return console.error(error);
-        webRtcPeer.generateOffer(onOfferJoin);
+        stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
+            webRtcPeer.processAnswer(frame.body, function(error) {
+                if (error) return console.error(error);
+            });
+        });
+
+        stompClient.subscribe('/queue/iceCandidate-' + userId, function (frame) {
+            webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
+                if (error) return console.error('Error adding candidate: ' + error);
+            });
+        });
+
+        var options = {
+            remoteVideo : mixVideo,
+            onicecandidate : onIceCandidate
+        };
+
+        webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
+            if (error) return console.error(error);
+            webRtcPeer.generateOffer(onOfferJoin);
+        });
+
     });
+
 
 }
 
@@ -118,44 +142,29 @@ function uploadVideoAndAudio() {
 function onIceCandidate(candidate) {
     console.log('Local candidate' + JSON.stringify(candidate));
 
-    var message = {
-        id : 'onIceCandidate',
-        candidate : candidate,
-        userId: userId
-    };
-    sendMessage(message);
+    stompClient.send('/app/onIceCandidate/' + userId, {}, JSON.stringify(candidate));
 }
 
 function onOfferStart(error, offerSdp) {
     if (error) return console.error('Error generating the offer');
     console.info('Invoking SDP offer callback function ' + location.host);
-    var message = {
-        id : 'startVideo',
-		userId: userId,
-        sdpOffer : offerSdp
-    };
-    sendMessage(message);
+
+    stompClient.send('/app/startVideo/' + userId, null, offerSdp);
+
 }
 
 function onOfferJoin(error, offerSdp) {
     if (error) return console.error('Error generating the offer');
     console.info('Invoking SDP offer callback function ' + location.host);
     var message = {
-        id : 'joinVideo',
         sdpOffer : offerSdp,
         userId: userId,
         roomId: roomId
     };
-    sendMessage(message);
+
+    stompClient.send('/app/joinVideo', null, JSON.stringify(message));
 }
 
-function startResponse(message) {
-    console.log('SDP answer received from server. Processing ...');
-
-    webRtcPeer.processAnswer(message.sdpAnswer, function(error) {
-        if (error) return console.error(error);
-    });
-}
 
 function leaveRoom() {
     var message = {
@@ -167,7 +176,7 @@ function leaveRoom() {
     document.getElementById('join').style.display = 'block';
     document.getElementById('room').style.display = 'none';
 
-    sendMessage(message)
+    // sendMessage(message)
 }
 
 function obtainChatContent() {
@@ -181,7 +190,7 @@ function obtainChatContent() {
         content: chatContent
     };
 
-    sendMessage(message)
+    // sendMessage(message)
 }
 
 function applyForHost() {
@@ -192,7 +201,7 @@ function applyForHost() {
         userId: userId
     };
 
-    sendMessage(message)
+    // sendMessage(message)
 }
 
 function receiveApply(message) {
@@ -214,7 +223,7 @@ function refuseApply() {
         id: 'refuseApply',
         applyUserId: applyUserId
     };
-    sendMessage(message);
+    // sendMessage(message);
 }
 
 function acceptApply() {
@@ -226,7 +235,7 @@ function acceptApply() {
         userId: userId,
         applyUserId: applyUserId
     };
-    sendMessage(message);
+    // sendMessage(message);
 }
 
 function applyRefused() {
@@ -254,12 +263,6 @@ function receiveSomeoneJoin(message) {
 
     var chatReceiveDiv = document.getElementById('chatReceiveContent');
     chatReceiveDiv.innerText += 'user ' + joinUserId + ' join the room\n';
-}
-
-function sendMessage(message) {
-	var jsonMessage = JSON.stringify(message);
-	console.log('Sending message: ' + jsonMessage);
-	ws.send(jsonMessage);
 }
 
 

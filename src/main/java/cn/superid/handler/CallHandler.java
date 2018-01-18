@@ -4,7 +4,6 @@ import cn.superid.entity.Room;
 import cn.superid.entity.User;
 import cn.superid.manager.RoomManagerInterface;
 import cn.superid.manager.UserManagerInterface;
-import cn.superid.util.UUIDGenerator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -39,12 +38,6 @@ public class CallHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "createRoom":
-                createRoom(jsonMessage, session);
-                break;
-            case "startVideo":
-                startVideo(jsonMessage, session);
-                break;
             case "joinVideo":
                 joinVideo(jsonMessage, session);
                 break;
@@ -63,58 +56,9 @@ public class CallHandler extends TextWebSocketHandler {
             case "acceptApply":
                 acceptApply(jsonMessage);
                 break;
-            case "onIceCandidate":
-                onIceCandidate(jsonMessage);
-                break;
             default:
                 break;
         }
-    }
-
-    private void onIceCandidate(JsonObject params){
-        JsonObject jsonCandidate = params.get("candidate").getAsJsonObject();
-        String userId = params.get("userId").getAsString();
-
-        User user = userManager.getByUserId(userId);
-        if (user != null) {
-            IceCandidate candidate = new IceCandidate(jsonCandidate.get("candidate").getAsString(),
-                    jsonCandidate.get("sdpMid").getAsString(),
-                    jsonCandidate.get("sdpMLineIndex").getAsInt());
-            user.addCandidate(candidate);
-        }
-    }
-
-    private void createRoom(JsonObject params, WebSocketSession session) {
-        String userId = params.get("userId").getAsString();
-
-        if(userManager.isUserFree(userId)){
-            String roomId = UUIDGenerator.generatorUUID();
-
-            log.info("PARTICIPANT {}: trying to join room {}", userId, roomId);
-
-            Room room = roomManager.getRoom(roomId);
-            User presenter = new User(userId, roomId, true, room.getPipeline(), session);
-            userManager.register(presenter);
-            presenter.notifyPresenterRoomId(roomId);
-
-        }else {
-            log.info("User {} is on another video", userId);
-
-            User user = userManager.getByUserId(userId);
-            user.notifyUserBusy();
-        }
-
-    }
-
-    private void startVideo(JsonObject params, WebSocketSession session) throws IOException{
-        String userId = params.get("userId").getAsString();
-        User presenter = userManager.getByUserId(userId);
-        String roomId = presenter.getRoomId();
-        Room room = roomManager.getRoom(roomId);
-
-        String sdpOffer = params.get("sdpOffer").getAsString();
-
-        room.joinRoom(presenter, sdpOffer, session);
     }
 
     private void joinVideo(JsonObject params, WebSocketSession session) throws IOException{
@@ -140,11 +84,11 @@ public class CallHandler extends TextWebSocketHandler {
         }
 
         Room room = roomManager.getRoom(roomId);
-        User viewer = new User(userId, roomId, false, room.getPipeline(), session);
+        User viewer = new User(userId, roomId, false, room.getPipeline());
         userManager.register(viewer);
 
         String sdpOffer = params.get("sdpOffer").getAsString();
-        room.joinRoom(viewer, sdpOffer, session);
+//        room.joinRoom(viewer, sdpOffer);
     }
 
     private void leaveRoom(JsonObject params) throws IOException{
