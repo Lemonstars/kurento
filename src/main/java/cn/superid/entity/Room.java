@@ -1,10 +1,8 @@
 package cn.superid.entity;
 
-import cn.superid.util.ResponseUtil;
 import org.kurento.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -43,20 +41,8 @@ public class Room implements Closeable {
 
     }
 
-    public void joinRoom(User user, String sdpOffer, SimpMessagingTemplate messagingTemplate){
+    public void joinRoom(User user){
         WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
-        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-
-        messagingTemplate.convertAndSend("/queue/startResponse-" + user.getUserId(), ResponseUtil.successResponse(sdpAnswer));
-
-        webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-            @Override
-            public void onEvent(IceCandidateFoundEvent event) {
-                messagingTemplate.convertAndSend("/queue/iceCandidate-" + user.getUserId(), ResponseUtil.successResponse(event.getCandidate()));
-            }
-        });
-        webRtcEndpoint.gatherCandidates();
-
         HubPort hubPort = new HubPort.Builder(composite).build();
         user.setHubPort(hubPort);
         if(user.isPresenter()){
@@ -74,9 +60,8 @@ public class Room implements Closeable {
 
             isRecord = true;
         }
-
-        messagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.successResponse(user.getUserId()));
     }
+
 
     public void changeCameraHost(User currentPresenter, User applier){
         WebRtcEndpoint currentWebRtcEndpoint = currentPresenter.getWebRtcEndpoint();

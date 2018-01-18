@@ -1,9 +1,8 @@
 package cn.superid.entity;
 
-import org.kurento.client.HubPort;
-import org.kurento.client.IceCandidate;
-import org.kurento.client.MediaPipeline;
-import org.kurento.client.WebRtcEndpoint;
+import cn.superid.util.ResponseUtil;
+import org.kurento.client.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.io.Closeable;
 
@@ -55,9 +54,21 @@ public class User implements Closeable {
         this.hubPort = hubPort;
     }
 
-
     public void addCandidate(IceCandidate candidate) {
         webRtcEndpoint.addIceCandidate(candidate);
+    }
+
+    public void processSdpOffer(String sdpOffer, SimpMessagingTemplate messagingTemplate){
+        String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
+        messagingTemplate.convertAndSend("/queue/startResponse-" + userId, ResponseUtil.successResponse(sdpAnswer));
+
+        webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+            @Override
+            public void onEvent(IceCandidateFoundEvent event) {
+                messagingTemplate.convertAndSend("/queue/iceCandidate-" + userId, ResponseUtil.successResponse(event.getCandidate()));
+            }
+        });
+        webRtcEndpoint.gatherCandidates();
     }
 
     @Override

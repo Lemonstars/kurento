@@ -62,10 +62,14 @@ public class RoomController {
         }
 
         Room room = roomService.getRoom(roomId);
+
         User user = new User(userId, roomId, isPresenter, room.getPipeline());
         userService.register(user);
+        user.processSdpOffer(sdpOffer, simpMessagingTemplate);
 
-        room.joinRoom(user, sdpOffer, simpMessagingTemplate);
+        room.joinRoom(user);
+
+        simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.successResponse(userId));
     }
 
     @MessageMapping("/leaveRoom/{userId}")
