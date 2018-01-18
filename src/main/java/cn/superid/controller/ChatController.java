@@ -4,8 +4,8 @@ import cn.superid.bean.form.ApplyAcceptForm;
 import cn.superid.bean.form.ChatContentForm;
 import cn.superid.entity.Room;
 import cn.superid.entity.User;
-import cn.superid.manager.RoomManagerInterface;
-import cn.superid.manager.UserManagerInterface;
+import cn.superid.service.RoomService;
+import cn.superid.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -25,10 +25,10 @@ public class ChatController {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    private UserManagerInterface userManager;
+    private UserService userService;
 
     @Autowired
-    private RoomManagerInterface roomManager;
+    private RoomService roomService;
 
     @MessageMapping("/chatSend")
     public void sendChat(ChatContentForm chatContentForm){
@@ -38,9 +38,9 @@ public class ChatController {
 
     @MessageMapping("/applyForHost/{userId}")
     public void applyForHost(@DestinationVariable String userId){
-        User applyUser = userManager.getByUserId(userId);
+        User applyUser = userService.getByUserId(userId);
         String roomId = applyUser.getRoomId();
-        Room currentRoom = roomManager.getRoom(roomId);
+        Room currentRoom = roomService.getRoom(roomId);
         User presenter = currentRoom.getPresenter();
         if(presenter != null){
             simpMessagingTemplate.convertAndSend("/queue/receiveApply-" + presenter.getUserId(), userId);
@@ -57,11 +57,11 @@ public class ChatController {
         String presenterId = applyAcceptForm.getPresenterId();
         String applierId = applyAcceptForm.getApplierId();
 
-        User currentPresenter = userManager.getByUserId(presenterId);
-        User applyUser = userManager.getByUserId(applierId);
+        User currentPresenter = userService.getByUserId(presenterId);
+        User applyUser = userService.getByUserId(applierId);
 
         String roomId = applyUser.getRoomId();
-        Room currentRoom = roomManager.getRoom(roomId);
+        Room currentRoom = roomService.getRoom(roomId);
         currentRoom.changeCameraHost(currentPresenter, applyUser);
     }
 

@@ -1,13 +1,13 @@
 package cn.superid.controller;
 
 import cn.superid.bean.form.RoomJoinForm;
+import cn.superid.bean.vo.ResponseVO;
+import cn.superid.constant.ErrorCode;
 import cn.superid.entity.Room;
 import cn.superid.entity.User;
-import cn.superid.manager.RoomManagerInterface;
-import cn.superid.manager.UserManagerInterface;
+import cn.superid.service.RoomService;
+import cn.superid.service.UserService;
 import cn.superid.util.ResponseUtil;
-import cn.superid.util.UUIDGenerator;
-import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -26,38 +26,22 @@ public class RoomController {
     private SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    private UserManagerInterface userManager;
+    private UserService userService;
 
     @Autowired
-    private RoomManagerInterface roomManager;
+    private RoomService roomService;
 
     @MessageMapping("/createRoom/{userId}")
     public void createRoom(@DestinationVariable String userId){
-        String roomId = "";
-        if(userManager.isUserFree(userId)){
-            roomId = UUIDGenerator.generatorUUID();
-
-            Room room = roomManager.getRoom(roomId);
-            User presenter = new User(userId, roomId, true, room.getPipeline());
-            userManager.register(presenter);
-            presenter.notifyPresenterRoomId(roomId);
-
+        ResponseVO responseVO;
+        if(userService.isUserFree(userId)){
+            Room newRoom = roomService.create(userId);
+            responseVO = ResponseUtil.successResponse(newRoom.getRoomId());
+            simpMessagingTemplate.convertAndSend("/queue/roomId-" + userId, responseVO);
         }else {
-
-            User user = userManager.getByUserId(userId);
-            user.notifyUserBusy();
+            responseVO = ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO);
+            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, responseVO);
         }
-
-        simpMessagingTemplate.convertAndSend("/queue/roomId-" + userId, ResponseUtil.successResponse(roomId));
-    }
-
-    @MessageMapping("/startVideo/{userId}")
-    public void startVideo(@DestinationVariable String userId, String sdpOffer){
-        User presenter = userManager.getByUserId(userId);
-        String roomId = presenter.getRoomId();
-        Room room = roomManager.getRoom(roomId);
-
-        room.joinRoom(presenter, sdpOffer, simpMessagingTemplate);
     }
 
     @MessageMapping("/joinVideo")
@@ -65,43 +49,38 @@ public class RoomController {
         String userId = roomJoinForm.getUserId();
         String roomId = roomJoinForm.getRoomId();
         String sdpOffer = roomJoinForm.getSdpOffer();
+        boolean isPresenter = roomJoinForm.getIsPresenter();
 
-        if(!roomManager.isRoomExist(roomId)){
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", "roomState");
-            jsonObject.addProperty("state", "room not exist");
-
+        if(!userService.isUserFree(userId)){
+            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO));
             return;
         }
 
-        if(!userManager.isUserFree(userId)){
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("id", "userState");
-            jsonObject.addProperty("state", "user is an anther video");
-
+        if(!roomService.isRoomExist(roomId)){
+            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, ResponseUtil.errorResponse(ErrorCode.ROOM_NOT_EXIST));
             return;
         }
 
-        Room room = roomManager.getRoom(roomId);
-        User viewer = new User(userId, roomId, false, room.getPipeline());
-        userManager.register(viewer);
+        Room room = roomService.getRoom(roomId);
+        User user = new User(userId, roomId, isPresenter, room.getPipeline());
+        userService.register(user);
 
-        room.joinRoom(viewer, sdpOffer, simpMessagingTemplate);
+        room.joinRoom(user, sdpOffer, simpMessagingTemplate);
     }
 
     @MessageMapping("/leaveRoom/{userId}")
     public void leaveRoom(@DestinationVariable String userId){
-        User userToQuit = userManager.getByUserId(userId);
+        User userToQuit = userService.getByUserId(userId);
         userToQuit.close();
-        userManager.removeByUserId(userId);
+        userService.removeByUserId(userId);
 
         String roomId = userToQuit.getRoomId();
-        Room room = roomManager.getRoom(roomId);
+        Room room = roomService.getRoom(roomId);
         room.removeUserId(userId);
 
         if(room.isRoomEmpty()){
             room.close();
-            roomManager.removeRoom(roomId);
+            roomService.removeRoom(roomId);
         }else {
             simpMessagingTemplate.convertAndSend("/topic/leftUserId-" + roomId, userId );
         }

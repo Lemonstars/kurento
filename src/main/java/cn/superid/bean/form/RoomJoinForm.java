@@ -10,6 +10,7 @@ public class RoomJoinForm {
     private String sdpOffer;
     private String userId;
     private String roomId;
+    private Boolean isPresenter;
 
     public String getSdpOffer() {
         return sdpOffer;
@@ -33,5 +34,13 @@ public class RoomJoinForm {
 
     public void setRoomId(String roomId) {
         this.roomId = roomId;
+    }
+
+    public Boolean getIsPresenter() {
+        return isPresenter;
+    }
+
+    public void setIsPresenter(Boolean isPresenter){
+        this.isPresenter = isPresenter;
     }
 }

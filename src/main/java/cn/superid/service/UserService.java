@@ -1,13 +1,13 @@
-package cn.superid.manager;
+package cn.superid.service;
 
 import cn.superid.entity.User;
 
 /**
  * @author 刘兴
  * @version 1.0
- * @date 2017/12/18
+ * @date 2018/01/11
  */
-public interface UserManagerInterface {
+public interface UserService {
 
     /**
      * 通过用户标识获取用户
@@ -37,4 +37,5 @@ public interface UserManagerInterface {
      * @return
      */
     boolean isUserFree(String userId);
+
 }

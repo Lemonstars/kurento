@@ -4,6 +4,7 @@ var mixVideo;
 var webRtcPeer;
 var userId;
 var roomId;
+var isPresenter;
 
 window.onload = function() {
 	mixVideo = document.getElementById('mixVideo');
@@ -23,11 +24,9 @@ function createRoom() {
     stompClient.connect({}, function (frame) {
 
         stompClient.subscribe('/queue/roomId-' + userId, function (frame) {
+
             roomId = JSON.parse(frame.body).data;
-
-            document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
-            uploadVideoAndAudio();
-
+            isPresenter = true;
 
             stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
                 receiveChatContent(JSON.parse(frame.body));
@@ -38,18 +37,31 @@ function createRoom() {
             });
 
             stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {
-                receiveSomeoneJoin(frame.body);
-            })
+                receiveSomeoneJoin(JSON.parse(frame.body).data);
+            });
+
+            document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
+
+            var options = {
+                remoteVideo : mixVideo,
+                onicecandidate : onIceCandidate
+            };
+
+            webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
+                if (error) return console.error(error);
+                webRtcPeer.generateOffer(onOffer);
+            });
+
         });
 
         stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
-            webRtcPeer.processAnswer(frame.body, function(error) {
+            webRtcPeer.processAnswer(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error(error);
             });
         });
 
         stompClient.subscribe('/queue/iceCandidate-' + userId, function (frame) {
-            webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
+            webRtcPeer.addIceCandidate(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error('Error adding candidate: ' + error);
             });
         });
@@ -60,6 +72,10 @@ function createRoom() {
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
             applyRefused();
+        });
+
+        stompClient.subscribe('/queue/error-' + userId, function (frame) {
+            alert(JSON.parse(frame.body).data);
         });
 
         stompClient.send('/app/createRoom/' + userId, {},  null);
@@ -82,15 +98,16 @@ function joinRoom() {
     var socket = new SockJS('/kurento');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
+        isPresenter = false;
 
         stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
-            webRtcPeer.processAnswer(frame.body, function(error) {
+            webRtcPeer.processAnswer(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error(error);
             });
         });
 
         stompClient.subscribe('/queue/iceCandidate-' + userId, function (frame) {
-            webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
+            webRtcPeer.addIceCandidate(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error('Error adding candidate: ' + error);
             });
         });
@@ -103,6 +120,10 @@ function joinRoom() {
             applyRefused();
         });
 
+        stompClient.subscribe('/queue/error-' + userId, function (frame) {
+            alert(JSON.parse(frame.body).data);
+        });
+
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
             receiveChatContent(JSON.parse(frame.body));
         });
@@ -112,8 +133,8 @@ function joinRoom() {
         });
 
         stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {
-            receiveSomeoneJoin(frame.body);
-        })
+            receiveSomeoneJoin(JSON.parse(frame.body).data);
+        });
 
         var options = {
             remoteVideo : mixVideo,
@@ -122,24 +143,11 @@ function joinRoom() {
 
         webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
             if (error) return console.error(error);
-            webRtcPeer.generateOffer(onOfferJoin);
+            webRtcPeer.generateOffer(onOffer);
         });
 
     });
 
-
-}
-
-function uploadVideoAndAudio() {
-    var options = {
-        remoteVideo : mixVideo,
-        onicecandidate : onIceCandidate
-    };
-
-    webRtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(error) {
-    	if (error) return console.error(error);
-    	webRtcPeer.generateOffer(onOfferStart);
-	});
 }
 
 function onIceCandidate(candidate) {
@@ -148,21 +156,14 @@ function onIceCandidate(candidate) {
     stompClient.send('/app/onIceCandidate/' + userId, {}, JSON.stringify(candidate));
 }
 
-function onOfferStart(error, offerSdp) {
-    if (error) return console.error('Error generating the offer');
-    console.info('Invoking SDP offer callback function ' + location.host);
-
-    stompClient.send('/app/startVideo/' + userId, null, offerSdp);
-
-}
-
-function onOfferJoin(error, offerSdp) {
+function onOffer(error, offerSdp) {
     if (error) return console.error('Error generating the offer');
     console.info('Invoking SDP offer callback function ' + location.host);
     var message = {
         sdpOffer : offerSdp,
         userId: userId,
-        roomId: roomId
+        roomId: roomId,
+        isPresenter: isPresenter
     };
 
     stompClient.send('/app/joinVideo', null, JSON.stringify(message));

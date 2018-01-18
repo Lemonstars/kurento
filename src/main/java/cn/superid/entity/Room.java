@@ -1,5 +1,6 @@
 package cn.superid.entity;
 
+import cn.superid.util.ResponseUtil;
 import org.kurento.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,20 +41,18 @@ public class Room implements Closeable {
         this.recorderEndpoint = new RecorderEndpoint.Builder(pipeline, recordFilePath).
                 withMediaProfile(MediaProfileSpecType.WEBM).build();
 
-        log.info("ROOM {} has been created", roomId);
     }
 
     public void joinRoom(User user, String sdpOffer, SimpMessagingTemplate messagingTemplate){
         WebRtcEndpoint webRtcEndpoint = user.getWebRtcEndpoint();
-
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 
-        messagingTemplate.convertAndSend("/queue/startResponse-" + user.getUserId(), sdpAnswer);
+        messagingTemplate.convertAndSend("/queue/startResponse-" + user.getUserId(), ResponseUtil.successResponse(sdpAnswer));
 
         webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
             @Override
             public void onEvent(IceCandidateFoundEvent event) {
-                messagingTemplate.convertAndSend("/queue/iceCandidate-" + user.getUserId(), event.getCandidate());
+                messagingTemplate.convertAndSend("/queue/iceCandidate-" + user.getUserId(), ResponseUtil.successResponse(event.getCandidate()));
             }
         });
         webRtcEndpoint.gatherCandidates();
@@ -76,7 +75,7 @@ public class Room implements Closeable {
             isRecord = true;
         }
 
-        messagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, user.getUserId());
+        messagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.successResponse(user.getUserId()));
     }
 
     public void changeCameraHost(User currentPresenter, User applier){
@@ -95,32 +94,6 @@ public class Room implements Closeable {
         applier.setPresenter(true);
     }
 
-    public void transferChatContent(String content, String senderId){
-        Set<String> userIdSet = participants.keySet();
-        User receiver;
-        for (String userId: userIdSet) {
-            receiver = participants.get(userId);
-            receiver.notifyChatContent(content, senderId);
-        }
-    }
-
-    public void notifySomeoneLeft(String leftUserId){
-        Set<String> allUserId = participants.keySet();
-        User userToNotify;
-        for(String userId: allUserId){
-            userToNotify = participants.get(userId);
-            userToNotify.notifyLeftUserId(leftUserId);
-        }
-    }
-
-    public void notifySomeoneJoin(String joinUserId){
-        Set<String> allUserId = participants.keySet();
-        User userToNotify;
-        for(String userId: allUserId){
-            userToNotify = participants.get(userId);
-            userToNotify.notifyJoinUserId(joinUserId);
-        }
-    }
 
     public MediaPipeline getPipeline() {
         return pipeline;
@@ -145,6 +118,10 @@ public class Room implements Closeable {
             }
         }
         return null;
+    }
+
+    public String getRoomId() {
+        return roomId;
     }
 
     @Override

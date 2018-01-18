@@ -1,7 +1,7 @@
 package cn.superid.controller;
 
 import cn.superid.entity.User;
-import cn.superid.manager.UserManagerInterface;
+import cn.superid.service.UserService;
 import org.kurento.client.IceCandidate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Controller;
 public class IceCandidateController {
 
     @Autowired
-    private UserManagerInterface userManager;
+    private UserService userService;
 
     @MessageMapping("/onIceCandidate/{userId}")
     public void onIceCandidate(@DestinationVariable String userId, IceCandidate iceCandidate){
-        User user = userManager.getByUserId(userId);
+        User user = userService.getByUserId(userId);
         if(user != null){
             user.addCandidate(iceCandidate);
         }

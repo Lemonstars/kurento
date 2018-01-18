@@ -1,15 +1,18 @@
-package cn.superid.manager.impl;
+package cn.superid.service.impl;
 
 import cn.superid.entity.User;
-import cn.superid.manager.UserManagerInterface;
+import cn.superid.service.UserService;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author 刘兴
- * @date 2017-12-18
+ * @version 1.0
+ * @date 2018/01/11
  */
-public class UserManagerImpl implements UserManagerInterface{
+@Service
+public class UserServiceImpl implements UserService {
 
     private ConcurrentHashMap<String, User> usersByUserId = new ConcurrentHashMap<>();
 
@@ -34,4 +37,6 @@ public class UserManagerImpl implements UserManagerInterface{
     public boolean isUserFree(String userId) {
         return !usersByUserId.containsKey(userId);
     }
+
+
 }

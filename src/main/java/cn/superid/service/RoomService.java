@@ -1,22 +1,14 @@
-package cn.superid.manager;
+package cn.superid.service;
 
 import cn.superid.entity.Room;
 
 /**
  * @author 刘兴
  * @version 1.0
- * @date 2017/12/18
+ * @date 2018/01/11
  */
-public interface RoomManagerInterface {
+public interface RoomService {
 
-    /**
-     * 根据房间名获取房间：
-     * 如果房间不存在，则创建一个；若存在，则返回
-     *
-     * @param roomId
-     * @return
-     */
-    Room getRoom(String roomId);
 
     /**
      * 通过房间标识判断房间是否存在
@@ -30,5 +22,20 @@ public interface RoomManagerInterface {
      * @param roomId
      */
     void removeRoom(String roomId);
+
+    /**
+     * 创建房间
+     * @param userId
+     * @return
+     */
+    Room create(String userId);
+
+
+    /**
+     * 根据房间名获取房间
+     * @param roomId
+     * @return
+     */
+    Room getRoom(String roomId);
 
 }
