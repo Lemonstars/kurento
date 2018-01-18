@@ -38,9 +38,6 @@ public class CallHandler extends TextWebSocketHandler {
         JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
         switch (jsonMessage.get("id").getAsString()) {
-            case "chatSend":
-                chatSend(jsonMessage);
-                break;
             case "applyForHost":
                 applyForHost(jsonMessage);
                 break;
@@ -53,15 +50,6 @@ public class CallHandler extends TextWebSocketHandler {
             default:
                 break;
         }
-    }
-
-    private void chatSend(JsonObject params) throws IOException{
-        String roomId = params.get("roomId").getAsString();
-        String userId = params.get("userId").getAsString();
-        String content = params.get("content").getAsString();
-
-        Room room = roomManager.getRoom(roomId);
-        room.transferChatContent(content, userId);
     }
 
     private void applyForHost(JsonObject params) throws IOException{

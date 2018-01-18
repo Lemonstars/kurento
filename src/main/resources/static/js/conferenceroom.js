@@ -15,9 +15,6 @@ window.onload = function() {
 // 	console.info('Received message: ' + message.data);
 //
 // 	switch (parsedMessage.id) {
-//         case 'chatContent':
-//             receiveChatContent(parsedMessage);
-//             break;
 //         case 'leftUserId':
 //             receiveSomeoneLeft(parsedMessage);
 //             break;
@@ -53,6 +50,16 @@ function createRoom() {
 
             document.getElementById('room-header').innerText = 'roomId ' + roomId + '\n' + 'userId ' + userId ;
             uploadVideoAndAudio();
+
+
+            stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
+                receiveChatContent(JSON.parse(frame.body));
+            });
+
+            stompClient.subscribe('/topic/leftUserId-' + roomId, function (frame) {
+                receiveSomeoneLeft(frame.body);
+            });
+
         });
 
         stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
@@ -65,10 +72,6 @@ function createRoom() {
             webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
                 if (error) return console.error('Error adding candidate: ' + error);
             });
-        });
-
-        stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
-            receiveChatContent(JSON.parse(frame.body));
         });
 
         stompClient.send('/app/createRoom/' + userId, {},  null);
@@ -163,16 +166,12 @@ function onOfferJoin(error, offerSdp) {
 
 
 function leaveRoom() {
-    var message = {
-        id : 'leaveRoom',
-        userId: userId
-    };
 
     document.getElementById('create').style.display = 'block';
     document.getElementById('join').style.display = 'block';
     document.getElementById('room').style.display = 'none';
 
-    // sendMessage(message)
+    stompClient.send('/app/leaveRoom/' + userId, null, null)
 }
 
 function obtainChatContent() {
@@ -200,12 +199,7 @@ function receiveChatContent(message) {
 function applyForHost() {
     document.getElementById('applyForHost').style.display = 'none';
 
-    var message = {
-        id: 'applyForHost',
-        userId: userId
-    };
-
-    // sendMessage(message)
+    stompClient.send('/app/applyForHost/'+userId, null, null);
 }
 
 function receiveApply(message) {
@@ -247,9 +241,7 @@ function applyRefused() {
     document.getElementById('applyInfo').innerText += 'Your apply is refused \n';
 }
 
-function receiveSomeoneLeft(message) {
-    var leftUserId = message.userId;
-
+function receiveSomeoneLeft(leftUserId) {
     var chatReceiveDiv = document.getElementById('chatReceiveContent');
     chatReceiveDiv.innerText += 'user ' + leftUserId + ' leave the room\n';
 }

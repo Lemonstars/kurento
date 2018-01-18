@@ -103,7 +103,7 @@ public class RoomController {
             room.close();
             roomManager.removeRoom(roomId);
         }else {
-            room.notifySomeoneLeft(userId);
+            simpMessagingTemplate.convertAndSend("/topic/leftUserId-" + roomId, userId );
         }
     }
 
