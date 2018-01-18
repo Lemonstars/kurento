@@ -1,9 +1,12 @@
 package cn.superid.controller;
 
 import cn.superid.bean.form.ChatContentForm;
+import cn.superid.entity.Room;
+import cn.superid.entity.User;
 import cn.superid.manager.RoomManagerInterface;
 import cn.superid.manager.UserManagerInterface;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -32,15 +35,15 @@ public class ChatController {
         simpMessagingTemplate.convertAndSend("/topic/chatContent-" + roomId,chatContentForm);
     }
 
-//    @MessageMapping("/applyForHost")
-//    public void applyForHost(@DestinationVariable String userId){
-//        User applyUser = userManager.getByUserId(userId);
-//        String roomId = applyUser.getRoomId();
-//        Room currentRoom = roomManager.getRoom(roomId);
-//        User presenter = currentRoom.getPresenter();
-//        if(presenter != null){
-//            presenter.notifyApplyForHost(userId);
-//        }
-//    }
+    @MessageMapping("/applyForHost/{userId}")
+    public void applyForHost(@DestinationVariable String userId){
+        User applyUser = userManager.getByUserId(userId);
+        String roomId = applyUser.getRoomId();
+        Room currentRoom = roomManager.getRoom(roomId);
+        User presenter = currentRoom.getPresenter();
+        if(presenter != null){
+            simpMessagingTemplate.convertAndSend("/queue/receiveApply", userId);
+        }
+    }
 
 }

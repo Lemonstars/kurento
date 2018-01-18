@@ -15,12 +15,6 @@ window.onload = function() {
 // 	console.info('Received message: ' + message.data);
 //
 // 	switch (parsedMessage.id) {
-//         case 'joinUserId':
-//             receiveSomeoneJoin(parsedMessage);
-//             break;
-//         case 'receiveApply':
-//             receiveApply(parsedMessage);
-//             break;
 //         case 'applyRefused':
 //             applyRefused();
 //             break;
@@ -74,6 +68,9 @@ function createRoom() {
             });
         });
 
+        stompClient.subscribe('/queue/receiveApply', function (frame) {
+            receiveApply(JSON.parse(frame.body));
+        });
 
         stompClient.send('/app/createRoom/' + userId, {},  null);
     });
@@ -203,9 +200,7 @@ function applyForHost() {
     stompClient.send('/app/applyForHost/'+userId, null, null);
 }
 
-function receiveApply(message) {
-    var applyId = message.userId;
-
+function receiveApply(applyId) {
     var receiveApplyDiv = document.getElementById('receiveApply');
     receiveApplyDiv.style.display = 'block';
 
