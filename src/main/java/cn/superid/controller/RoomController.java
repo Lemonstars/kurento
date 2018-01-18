@@ -82,7 +82,7 @@ public class RoomController {
             room.close();
             roomService.removeRoom(roomId);
         }else {
-            simpMessagingTemplate.convertAndSend("/topic/leftUserId-" + roomId, userId );
+            simpMessagingTemplate.convertAndSend("/topic/leftUserId-" + roomId, ResponseUtil.successResponse(userId));
         }
     }
 

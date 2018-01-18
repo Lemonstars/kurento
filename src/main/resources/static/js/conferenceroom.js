@@ -29,11 +29,11 @@ function createRoom() {
             isPresenter = true;
 
             stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
-                receiveChatContent(JSON.parse(frame.body));
+                receiveChatContent(JSON.parse(frame.body).data);
             });
 
             stompClient.subscribe('/topic/leftUserId-' + roomId, function (frame) {
-                receiveSomeoneLeft(frame.body);
+                receiveSomeoneLeft(JSON.parse(frame.body).data);
             });
 
             stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {
@@ -67,7 +67,7 @@ function createRoom() {
         });
 
         stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
-            receiveApply(frame.body);
+            receiveApply(JSON.parse(frame.body).data);
         });
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
@@ -113,7 +113,7 @@ function joinRoom() {
         });
 
         stompClient.subscribe('/queue/receiveApply-' + userId, function (frame) {
-            receiveApply(JSON.parse(frame.body));
+            receiveApply(JSON.parse(frame.body).data);
         });
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
@@ -125,11 +125,11 @@ function joinRoom() {
         });
 
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
-            receiveChatContent(JSON.parse(frame.body));
+            receiveChatContent(JSON.parse(frame.body).data);
         });
 
         stompClient.subscribe('/topic/leftUserId-' + roomId, function (frame) {
-            receiveSomeoneLeft(frame.body);
+            receiveSomeoneLeft(JSON.parse(frame.body).data);
         });
 
         stompClient.subscribe('/topic/joinUserId-' + roomId, function (frame) {

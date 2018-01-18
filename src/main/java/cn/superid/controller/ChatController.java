@@ -6,6 +6,7 @@ import cn.superid.entity.Room;
 import cn.superid.entity.User;
 import cn.superid.service.RoomService;
 import cn.superid.service.UserService;
+import cn.superid.util.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -33,7 +34,7 @@ public class ChatController {
     @MessageMapping("/chatSend")
     public void sendChat(ChatContentForm chatContentForm){
         String roomId = chatContentForm.getRoomId();
-        simpMessagingTemplate.convertAndSend("/topic/chatContent-" + roomId,chatContentForm);
+        simpMessagingTemplate.convertAndSend("/topic/chatContent-" + roomId, ResponseUtil.successResponse(chatContentForm));
     }
 
     @MessageMapping("/applyForHost/{userId}")
@@ -43,13 +44,13 @@ public class ChatController {
         Room currentRoom = roomService.getRoom(roomId);
         User presenter = currentRoom.getPresenter();
         if(presenter != null){
-            simpMessagingTemplate.convertAndSend("/queue/receiveApply-" + presenter.getUserId(), userId);
+            simpMessagingTemplate.convertAndSend("/queue/receiveApply-" + presenter.getUserId(), ResponseUtil.successResponse(userId));
         }
     }
 
     @MessageMapping("/refuseApply/{applyUserId}")
     public void refuseApply(@DestinationVariable String applyUserId){
-        simpMessagingTemplate.convertAndSend("/queue/applyRefused-" + applyUserId, applyUserId);
+        simpMessagingTemplate.convertAndSend("/queue/applyRefused-" + applyUserId, ResponseUtil.successResponse(applyUserId));
     }
 
     @MessageMapping("/acceptApply")
