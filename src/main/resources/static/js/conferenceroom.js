@@ -67,6 +67,10 @@ function createRoom() {
             });
         });
 
+        stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
+            receiveChatContent(JSON.parse(frame.body));
+        });
+
         stompClient.send('/app/createRoom/' + userId, {},  null);
     });
 
@@ -98,6 +102,10 @@ function joinRoom() {
             webRtcPeer.addIceCandidate(JSON.parse(frame.body), function(error) {
                 if (error) return console.error('Error adding candidate: ' + error);
             });
+        });
+
+        stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
+            receiveChatContent(JSON.parse(frame.body));
         });
 
         var options = {
@@ -172,13 +180,21 @@ function obtainChatContent() {
     document.getElementById('chatText').value = '';
 
     var message = {
-        id: 'chatSend',
         userId: userId,
         roomId: roomId,
-        content: chatContent
+        chatContent: chatContent
     };
 
-    // sendMessage(message)
+    stompClient.send('/app/chatSend', null, JSON.stringify(message));
+}
+
+
+function receiveChatContent(message) {
+    var content = message.chatContent;
+    var senderId = message.userId;
+
+    var chatReceiveDiv = document.getElementById('chatReceiveContent');
+    chatReceiveDiv.innerText += senderId +" : "+content+"\n";
 }
 
 function applyForHost() {
@@ -229,14 +245,6 @@ function acceptApply() {
 function applyRefused() {
     document.getElementById('applyForHost').style.display = 'block';
     document.getElementById('applyInfo').innerText += 'Your apply is refused \n';
-}
-
-function receiveChatContent(message) {
-    var content = message.content;
-    var senderId = message.senderId;
-
-    var chatReceiveDiv = document.getElementById('chatReceiveContent');
-    chatReceiveDiv.innerText += senderId +" : "+content+"\n";
 }
 
 function receiveSomeoneLeft(message) {
