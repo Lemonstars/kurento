@@ -27,16 +27,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User removeByUserId(String userId) {
+    public void removeByUserId(String userId) {
         User user = getByUserId(userId);
         usersByUserId.remove(userId);
-        return user;
+        user.close();
     }
 
     @Override
     public boolean isUserFree(String userId) {
         return !usersByUserId.containsKey(userId);
     }
-
-
 }

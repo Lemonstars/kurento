@@ -30,12 +30,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public void removeRoom(String roomId) {
-        rooms.remove(roomId);
-    }
-
-    @Override
-    public Room create(String userId) {
+    public Room create() {
         //create a new room and register it
         String roomId = UUIDGeneratorUtil.generatorUUID();
         MediaPipeline pipeline = kurento.createMediaPipeline();
@@ -50,4 +45,15 @@ public class RoomServiceImpl implements RoomService {
         return rooms.get(roomId);
     }
 
+    @Override
+    public void leaveRoom(String userId, String roomId) {
+        Room room = getRoom(roomId);
+        room.removeUserId(userId);
+
+        if(room.isRoomEmpty()){
+            room.close();
+            rooms.remove(roomId);
+        }
+
+    }
 }

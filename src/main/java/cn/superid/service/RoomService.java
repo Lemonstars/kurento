@@ -17,18 +17,12 @@ public interface RoomService {
      */
     boolean isRoomExist(String roomId);
 
-    /**
-     * 移除房间记录
-     * @param roomId
-     */
-    void removeRoom(String roomId);
 
     /**
      * 创建房间
-     * @param userId
      * @return
      */
-    Room create(String userId);
+    Room create();
 
 
     /**
@@ -38,4 +32,10 @@ public interface RoomService {
      */
     Room getRoom(String roomId);
 
+    /**
+     * 用户离开房间
+     * @param userId
+     * @param roomId
+     */
+    void leaveRoom(String userId, String roomId);
 }

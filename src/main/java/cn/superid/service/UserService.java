@@ -21,7 +21,7 @@ public interface UserService {
      * @param userId
      * @return
      */
-    User removeByUserId(String userId);
+    void removeByUserId(String userId);
 
     /**
      * 存储用户记录

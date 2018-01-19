@@ -35,7 +35,7 @@ public class RoomController {
     public void createRoom(@DestinationVariable String userId){
         ResponseVO responseVO;
         if(userService.isUserFree(userId)){
-            Room newRoom = roomService.create(userId);
+            Room newRoom = roomService.create();
             responseVO = ResponseUtil.successResponse(newRoom.getRoomId());
         }else {
             responseVO = ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO);
@@ -50,43 +50,38 @@ public class RoomController {
         String sdpOffer = roomJoinForm.getSdpOffer();
         boolean isPresenter = roomJoinForm.getIsPresenter();
 
+        ResponseVO responseVO;
         if(!userService.isUserFree(userId)){
-            simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO));
-            return;
+            responseVO = ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO);
+        }else if(!roomService.isRoomExist(roomId)){
+            responseVO = ResponseUtil.errorResponse(ErrorCode.ROOM_NOT_EXIST);
+        }else {
+            Room room = roomService.getRoom(roomId);
+
+            User user = new User(userId, roomId, isPresenter, room.getPipeline());
+            userService.register(user);
+            user.processSdpOffer(sdpOffer, simpMessagingTemplate);
+
+            room.joinRoom(user);
+
+            responseVO= ResponseUtil.successResponse(userId);
         }
 
-        if(!roomService.isRoomExist(roomId)){
-            simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.errorResponse(ErrorCode.ROOM_NOT_EXIST));
-            return;
-        }
-
-        Room room = roomService.getRoom(roomId);
-
-        User user = new User(userId, roomId, isPresenter, room.getPipeline());
-        userService.register(user);
-        user.processSdpOffer(sdpOffer, simpMessagingTemplate);
-
-        room.joinRoom(user);
-
-        simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.successResponse(userId));
+        simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, responseVO);
     }
 
     @MessageMapping("/leaveRoom/{userId}")
     public void leaveRoom(@DestinationVariable String userId){
-        User userToQuit = userService.getByUserId(userId);
-        userToQuit.close();
-        userService.removeByUserId(userId);
+        if(!userService.isUserFree(userId)){
+            User userToQuit = userService.getByUserId(userId);
+            userService.removeByUserId(userId);
 
-        String roomId = userToQuit.getRoomId();
-        Room room = roomService.getRoom(roomId);
-        room.removeUserId(userId);
+            String roomId = userToQuit.getRoomId();
+            roomService.leaveRoom(userId, roomId);
 
-        if(room.isRoomEmpty()){
-            room.close();
-            roomService.removeRoom(roomId);
-        }else {
             simpMessagingTemplate.convertAndSend("/topic/leftUserId-" + roomId, ResponseUtil.successResponse(userId));
         }
+
     }
 
 }
