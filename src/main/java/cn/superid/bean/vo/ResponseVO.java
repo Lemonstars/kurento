@@ -30,4 +30,12 @@ public class ResponseVO {
     public void setData(Object data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        return "ResponseVO{" +
+                "code=" + code +
+                ", data=" + data +
+                '}';
+    }
 }

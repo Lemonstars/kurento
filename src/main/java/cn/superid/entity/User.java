@@ -4,13 +4,11 @@ import cn.superid.util.ResponseUtil;
 import org.kurento.client.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import java.io.Closeable;
-
 /**
  * @author 刘兴
  * @date 2017-12-18
  */
-public class User implements Closeable {
+public class User{
 
     private String userId;
     private String roomId;
@@ -71,7 +69,6 @@ public class User implements Closeable {
         webRtcEndpoint.gatherCandidates();
     }
 
-    @Override
     public void close() {
         webRtcEndpoint.release();
     }

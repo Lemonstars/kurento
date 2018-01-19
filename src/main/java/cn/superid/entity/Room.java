@@ -4,7 +4,6 @@ import org.kurento.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @author 刘兴
  * @date 2017-12-18
  */
-public class Room implements Closeable {
+public class Room {
 
     private static final int WAIT_TIME = 5;
 
@@ -109,7 +108,6 @@ public class Room implements Closeable {
         return roomId;
     }
 
-    @Override
     public void close() {
         participants.clear();
         pipeline.release();

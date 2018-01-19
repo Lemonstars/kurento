@@ -30,4 +30,12 @@ public class ChatContentVO {
     public void setChatContent(String chatContent) {
         this.chatContent = chatContent;
     }
+
+    @Override
+    public String toString() {
+        return "ChatContentVO{" +
+                "userId='" + userId + '\'' +
+                ", chatContent='" + chatContent + '\'' +
+                '}';
+    }
 }
