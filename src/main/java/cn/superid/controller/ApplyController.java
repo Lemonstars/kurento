@@ -2,6 +2,7 @@ package cn.superid.controller;
 
 import cn.superid.bean.form.ApplyAcceptForm;
 import cn.superid.service.ApplyService;
+import cn.superid.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,23 +16,34 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ApplyController {
 
-
     @Autowired
     private ApplyService applyService;
 
+    @Autowired
+    private UserService userService;
+
     @MessageMapping("/applyForHost/{userId}")
     public void handleApply(@DestinationVariable String userId){
-         applyService.applyForHost(userId);
+        if(!userService.isUserFree(userId)){
+            applyService.applyForHost(userId);
+        }
     }
 
     @MessageMapping("/refuseApply/{applyUserId}")
     public void refuseApply(@DestinationVariable String applyUserId){
-        applyService.refuseApply(applyUserId);
+        if(!userService.isUserFree(applyUserId)){
+            applyService.refuseApply(applyUserId);
+        }
     }
 
     @MessageMapping("/acceptApply")
     public void acceptApply(ApplyAcceptForm form){
-        applyService.acceptApply(form.getPresenterId(), form.getApplierId());
+        String presenterId = form.getPresenterId();
+        String applierId = form.getApplierId();
+        if(!userService.isUserFree(presenterId) &&
+                !userService.isUserFree(applierId)){
+            applyService.acceptApply(presenterId, applierId);
+        }
     }
 
 }

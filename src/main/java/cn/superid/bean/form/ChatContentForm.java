@@ -8,7 +8,6 @@ package cn.superid.bean.form;
 public class ChatContentForm {
 
     private String userId;
-    private String roomId;
     private String chatContent;
 
     public String getUserId() {
@@ -17,14 +16,6 @@ public class ChatContentForm {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
     }
 
     public String getChatContent() {

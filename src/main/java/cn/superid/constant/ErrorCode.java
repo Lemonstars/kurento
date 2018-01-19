@@ -8,7 +8,8 @@ package cn.superid.constant;
 public enum  ErrorCode {
 
     ROOM_NOT_EXIST(1000, "The room does't exist"),
-    USER_ON_VIDEO(2000, "The user is busy");
+    USER_ON_VIDEO(2000, "The user is busy"),
+    USER_NOT_ON_VIDEO(2001, "The user does't join the video");
 
     private Integer code;
     private String message;

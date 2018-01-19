@@ -74,6 +74,10 @@ function createRoom() {
             applyRefused();
         });
 
+        stompClient.subscribe('/queue/applyAccept-' + userId, function () {
+            applyAccept();
+        });
+
         stompClient.send('/app/createRoom/' + userId, {},  null);
     });
 
@@ -114,6 +118,10 @@ function joinRoom() {
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
             applyRefused();
+        });
+
+        stompClient.subscribe('/queue/applyAccept-' + userId, function () {
+            applyAccept();
         });
 
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
@@ -212,6 +220,9 @@ function refuseApply() {
     document.getElementById('receiveApply').style.display = 'none';
     var applyUserId = document.getElementById('applyInfo').value;
     stompClient.send('/app/refuseApply/' + applyUserId, null ,null);
+
+    document.getElementById('applyInfo').innerText += 'Your refuse that User' +
+        applyUserId +' uses the camera \n';
 }
 
 function acceptApply() {
@@ -224,11 +235,19 @@ function acceptApply() {
     };
 
     stompClient.send('/app/acceptApply', null, JSON.stringify(message));
+
+    document.getElementById('applyInfo').innerText += 'Your accept that User' +
+        applyUserId +'users the camera \n';
+    document.getElementById('applyForHost').style.display = 'block';
 }
 
 function applyRefused() {
     document.getElementById('applyForHost').style.display = 'block';
     document.getElementById('applyInfo').innerText += 'Your apply is refused \n';
+}
+
+function applyAccept() {
+    document.getElementById('applyInfo').innerText += 'Your apply is accepted \n';
 }
 
 function receiveSomeoneLeft(leftUserId) {
