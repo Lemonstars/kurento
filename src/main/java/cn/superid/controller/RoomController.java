@@ -37,27 +37,26 @@ public class RoomController {
         if(userService.isUserFree(userId)){
             Room newRoom = roomService.create(userId);
             responseVO = ResponseUtil.successResponse(newRoom.getRoomId());
-            simpMessagingTemplate.convertAndSend("/queue/roomId-" + userId, responseVO);
         }else {
             responseVO = ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO);
-            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, responseVO);
         }
+        simpMessagingTemplate.convertAndSend("/queue/roomId-" + userId, responseVO);
     }
 
-    @MessageMapping("/joinVideo")
-    public void joinVideo(RoomJoinForm roomJoinForm){
+    @MessageMapping("/joinRoom")
+    public void joinRoom(RoomJoinForm roomJoinForm){
         String userId = roomJoinForm.getUserId();
         String roomId = roomJoinForm.getRoomId();
         String sdpOffer = roomJoinForm.getSdpOffer();
         boolean isPresenter = roomJoinForm.getIsPresenter();
 
         if(!userService.isUserFree(userId)){
-            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO));
+            simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.errorResponse(ErrorCode.USER_ON_VIDEO));
             return;
         }
 
         if(!roomService.isRoomExist(roomId)){
-            simpMessagingTemplate.convertAndSend("/queue/error-" + userId, ResponseUtil.errorResponse(ErrorCode.ROOM_NOT_EXIST));
+            simpMessagingTemplate.convertAndSend("/topic/joinUserId-" + roomId, ResponseUtil.errorResponse(ErrorCode.ROOM_NOT_EXIST));
             return;
         }
 

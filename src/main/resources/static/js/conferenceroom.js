@@ -54,7 +54,7 @@ function createRoom() {
 
         });
 
-        stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
+        stompClient.subscribe('/queue/sdpAnswer-' + userId, function (frame) {
             webRtcPeer.processAnswer(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error(error);
             });
@@ -72,10 +72,6 @@ function createRoom() {
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
             applyRefused();
-        });
-
-        stompClient.subscribe('/queue/error-' + userId, function (frame) {
-            alert(JSON.parse(frame.body).data);
         });
 
         stompClient.send('/app/createRoom/' + userId, {},  null);
@@ -100,7 +96,7 @@ function joinRoom() {
     stompClient.connect({}, function (frame) {
         isPresenter = false;
 
-        stompClient.subscribe('/queue/startResponse-' + userId, function (frame) {
+        stompClient.subscribe('/queue/sdpAnswer-' + userId, function (frame) {
             webRtcPeer.processAnswer(JSON.parse(frame.body).data, function(error) {
                 if (error) return console.error(error);
             });
@@ -118,10 +114,6 @@ function joinRoom() {
 
         stompClient.subscribe('/queue/applyRefused-' + userId, function () {
             applyRefused();
-        });
-
-        stompClient.subscribe('/queue/error-' + userId, function (frame) {
-            alert(JSON.parse(frame.body).data);
         });
 
         stompClient.subscribe('/topic/chatContent-' + roomId, function (frame) {
@@ -166,7 +158,7 @@ function onOffer(error, offerSdp) {
         isPresenter: isPresenter
     };
 
-    stompClient.send('/app/joinVideo', null, JSON.stringify(message));
+    stompClient.send('/app/joinRoom', null, JSON.stringify(message));
 }
 
 

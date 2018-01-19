@@ -60,7 +60,7 @@ public class User implements Closeable {
 
     public void processSdpOffer(String sdpOffer, SimpMessagingTemplate messagingTemplate){
         String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
-        messagingTemplate.convertAndSend("/queue/startResponse-" + userId, ResponseUtil.successResponse(sdpAnswer));
+        messagingTemplate.convertAndSend("/queue/sdpAnswer-" + userId, ResponseUtil.successResponse(sdpAnswer));
 
         webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
             @Override
