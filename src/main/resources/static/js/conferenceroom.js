@@ -74,7 +74,7 @@ function createRoom() {
             applyRefused();
         });
 
-        stompClient.subscribe('/queue/applyAccept-' + userId, function () {
+        stompClient.subscribe('/queue/applyAccepted-' + userId, function () {
             applyAccept();
         });
 
@@ -120,7 +120,7 @@ function joinRoom() {
             applyRefused();
         });
 
-        stompClient.subscribe('/queue/applyAccept-' + userId, function () {
+        stompClient.subscribe('/queue/applyAccepted-' + userId, function () {
             applyAccept();
         });
 

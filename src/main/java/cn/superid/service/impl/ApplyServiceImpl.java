@@ -52,6 +52,6 @@ public class ApplyServiceImpl implements ApplyService{
         Room currentRoom = roomService.getRoom(roomId);
         currentRoom.changeCameraHost(currentPresenter, applyUser);
 
-        simpMessagingTemplate.convertAndSend("/queue/applyAccept-" + applierId, ResponseUtil.successResponse(applierId));
+        simpMessagingTemplate.convertAndSend("/queue/applyAccepted-" + applierId, ResponseUtil.successResponse(applierId));
     }
 }
